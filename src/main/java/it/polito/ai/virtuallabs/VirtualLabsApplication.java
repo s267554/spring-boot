@@ -19,7 +19,8 @@ public class VirtualLabsApplication {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NotNull CorsRegistry registry) {
-                registry.addMapping("/**");
+                registry.addMapping("/**")
+                        .allowedMethods(CorsConfiguration.ALL);
             }
         };
     }
