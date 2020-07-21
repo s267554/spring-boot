@@ -1,5 +1,6 @@
 package it.polito.ai.virtuallabs.security;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,15 +29,16 @@ public class JwtSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Override
-    protected void configure(HttpSecurity httpSecurity) throws Exception {
+    protected void configure(@NotNull HttpSecurity httpSecurity) throws Exception {
 
         httpSecurity
                 .httpBasic().disable()
+                .cors().and()
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/register", "/login", "/confirmAccount", "/confirmTeam", "/rejectTeam").permitAll()
+                .antMatchers("/auth/**").permitAll()
                 .antMatchers("**").authenticated()
                 .and()
                 .apply(new JwtSecurityConfigurer(jwtTokenProvider));

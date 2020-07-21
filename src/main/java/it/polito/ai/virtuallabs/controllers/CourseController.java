@@ -2,7 +2,6 @@ package it.polito.ai.virtuallabs.controllers;
 
 import it.polito.ai.virtuallabs.dtos.CourseDTO;
 import it.polito.ai.virtuallabs.dtos.StudentDTO;
-import it.polito.ai.virtuallabs.dtos.VirtualMachineDTO;
 import it.polito.ai.virtuallabs.services.VirtualLabsService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +12,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Validated
-@CrossOrigin
 @RestController
 @RequestMapping("/api/courses")
 public class CourseController {
