@@ -1,9 +1,9 @@
 package it.polito.ai.virtuallabs.models;
 
+import it.polito.ai.virtuallabs.ModelUtil;
 import lombok.Data;
 import org.springframework.lang.Nullable;
 
-import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -12,11 +12,11 @@ import javax.validation.constraints.Size;
 public class RegisterRequest {
 
     @Nullable
-    @Pattern(regexp = "([pP]|[dD])[\\d]{6}")
+    @Pattern(regexp = ModelUtil.REGEX_ID)
     String id;
 
     @Nullable
-    @Pattern(regexp = "([sS][\\d]{6}@studenti\\.polito\\.it)|([dD][\\d]{6}@polito\\.it)")
+    @Pattern(regexp = ModelUtil.REGEX_EMAIL)
     String email;
 
     @NotBlank

@@ -16,6 +16,9 @@ public final class ModelUtil {
     public final static String ROLE_USER = "ROLE_USER";
     public final static String ROLE_ADMIN = "ROLE_ADMIN";
 
+    public final static String REGEX_ID = "([pP]|[dD])[\\d]{6}";
+    public final static String REGEX_EMAIL = "([sS][\\d]{6}@studenti\\.polito\\.it)|([dD][\\d]{6}@polito\\.it)";
+
     public static @NotNull TeamDTO map(@NotNull ModelMapper modelMapper, Team team) {
         final TeamDTO teamDTO = modelMapper.map(team, TeamDTO.class);
         final Team.Key key = team.getKey();

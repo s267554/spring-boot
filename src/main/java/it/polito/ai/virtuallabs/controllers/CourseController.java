@@ -3,6 +3,7 @@ package it.polito.ai.virtuallabs.controllers;
 import it.polito.ai.virtuallabs.dtos.CourseDTO;
 import it.polito.ai.virtuallabs.dtos.StudentDTO;
 import it.polito.ai.virtuallabs.services.VirtualLabsService;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -65,14 +66,17 @@ public class CourseController {
 
     @PostMapping("/{courseName}/enrollOne")
     public void enrollOne(@PathVariable(name = "courseName") @NotBlank String courseName,
-                          @RequestBody @NotBlank String username) {
-        virtualLabsService.addStudentToCourse(courseName, username);
+                          @RequestBody @Valid @NotNull StudentDTO studentDTO) {
+        virtualLabsService.addStudentToCourse(courseName, studentDTO.getId());
     }
 
-    @PostMapping("/{courseName}/remove")
+    @PostMapping("/{courseName}/dropOutAll")
     public void removeStudentsFromCourse(@PathVariable(name = "courseName") @NotBlank String courseName,
-                                         @RequestBody List<String> usernames) {
-        virtualLabsService.removeStudentsFromCourse(courseName, usernames);
+                                         @RequestBody @NotNull @Valid List<StudentDTO> studentDTOS) {
+        final List<String> ids = studentDTOS.stream()
+                .map(StudentDTO::getId)
+                .collect(Collectors.toList());
+        virtualLabsService.removeStudentsFromCourse(courseName, ids);
     }
 
     @GetMapping("/{courseName}/notEnrolled")

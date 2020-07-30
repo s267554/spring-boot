@@ -1,5 +1,6 @@
 package it.polito.ai.virtuallabs.services;
 
+import it.polito.ai.virtuallabs.ModelUtil;
 import it.polito.ai.virtuallabs.dtos.*;
 import it.polito.ai.virtuallabs.entities.*;
 import it.polito.ai.virtuallabs.repositories.*;
@@ -177,7 +178,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
         return course.getTeams().stream()
-                .map((t) -> modelMapper.map(t, TeamDTO.class))
+                .map((t) -> ModelUtil.map(modelMapper, t))
                 .collect(Collectors.toList());
     }
 
