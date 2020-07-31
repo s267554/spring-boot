@@ -1,6 +1,7 @@
 package it.polito.ai.virtuallabs.entities;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Data
 @Entity
+@NoArgsConstructor
 @Table(name = "vms")
 public class VirtualMachine {
 

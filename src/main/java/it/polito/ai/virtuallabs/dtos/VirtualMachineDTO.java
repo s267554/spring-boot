@@ -16,4 +16,6 @@ public class VirtualMachineDTO extends RepresentationModel<VirtualMachineDTO> {
 
     private double ram;
 
+    private String url;
+
 }
