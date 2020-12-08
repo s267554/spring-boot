@@ -178,7 +178,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
         return course.getTeams().stream()
-                .map((t) -> ModelUtil.map(modelMapper, t))
+                .map(t -> modelMapper.map(t, TeamDTO.class))
                 .collect(Collectors.toList());
     }
 

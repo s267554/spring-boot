@@ -19,7 +19,12 @@ public final class ModelUtil {
     public final static String REGEX_ID = "([pP]|[dD])[\\d]{6}";
     public final static String REGEX_EMAIL = "([sS][\\d]{6}@studenti\\.polito\\.it)|([dD][\\d]{6}@polito\\.it)";
 
-    public static @NotNull TeamDTO map(@NotNull ModelMapper modelMapper, Team team) {
+    /*
+     modelMapper is now configured inside @Bean creation at VirtualLabsApplication.java
+     these methods should be thus redundant
+    */
+
+  /*  public static @NotNull TeamDTO map(@NotNull ModelMapper modelMapper, Team team) {
         final TeamDTO teamDTO = modelMapper.map(team, TeamDTO.class);
         final Team.Key key = team.getKey();
         teamDTO.setCourseName(key.getCourseName());
@@ -31,6 +36,6 @@ public final class ModelUtil {
         final Team team = modelMapper.map(teamDTO, Team.class);
         team.setKey(new Team.Key(teamDTO.getCourseName(), teamDTO.getName()));
         return team;
-    }
+    }*/
 
 }
