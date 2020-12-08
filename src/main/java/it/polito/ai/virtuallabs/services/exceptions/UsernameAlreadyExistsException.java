@@ -1,4 +1,4 @@
-package it.polito.ai.virtuallabs.services;
+package it.polito.ai.virtuallabs.services.exceptions;
 
 import org.springframework.security.core.AuthenticationException;
 

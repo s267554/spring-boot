@@ -5,6 +5,7 @@ import it.polito.ai.virtuallabs.entities.Professor;
 import it.polito.ai.virtuallabs.entities.Student;
 import it.polito.ai.virtuallabs.entities.User;
 import it.polito.ai.virtuallabs.repositories.UserRepository;
+import it.polito.ai.virtuallabs.services.exceptions.UsernameAlreadyExistsException;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package it.polito.ai.virtuallabs.services;
+package it.polito.ai.virtuallabs.services.exceptions;
 
 public class PaperAlreadyExistsException extends VirtualLabsServiceException {
     public PaperAlreadyExistsException() {

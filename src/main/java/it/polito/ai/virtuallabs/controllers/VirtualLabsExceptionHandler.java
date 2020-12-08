@@ -1,6 +1,6 @@
 package it.polito.ai.virtuallabs.controllers;
 
-import it.polito.ai.virtuallabs.services.*;
+import it.polito.ai.virtuallabs.services.exceptions.*;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

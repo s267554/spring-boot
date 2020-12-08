@@ -1,10 +1,10 @@
 package it.polito.ai.virtuallabs.services;
 
-import it.polito.ai.virtuallabs.ModelUtil;
 import it.polito.ai.virtuallabs.dtos.*;
 import it.polito.ai.virtuallabs.entities.*;
 import it.polito.ai.virtuallabs.repositories.*;
 import it.polito.ai.virtuallabs.security.IAuthenticationFacade;
+import it.polito.ai.virtuallabs.services.exceptions.*;
 import org.jetbrains.annotations.NotNull;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
