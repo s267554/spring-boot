@@ -157,7 +157,7 @@ public class NotificationServiceImpl implements NotificationService {
         ).collect(Collectors.toList());
 
         final LocalDateTime expiryDate = LocalDateTime.now()
-                .plus(1, ChronoUnit.MILLIS);
+                .plus(timeout, ChronoUnit.SECONDS);
 
         final Timestamp timestamp = Timestamp.valueOf(expiryDate);
 
