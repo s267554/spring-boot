@@ -124,7 +124,13 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         // fetch students of the course
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
-        return mapToStudentDTOs(course.getStudents());
+        List<StudentDTO> studentDTOS = mapToStudentDTOs(course.getStudents());
+        for (StudentDTO s : studentDTOS) {
+            List<Team> teams = teamRepository.findByCourseAndStudent(courseName, s.getEmail());
+            if (teams.size() > 0)
+                s.setTeamName(teams.get(0).getKey().getName());
+        }
+        return studentDTOS;
 
     }
 

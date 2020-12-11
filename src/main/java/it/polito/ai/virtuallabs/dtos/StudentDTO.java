@@ -29,4 +29,6 @@ public class StudentDTO extends RepresentationModel<StudentDTO> {
 
     private String photoUrl;
 
+    private String teamName;
+
 }
