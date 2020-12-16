@@ -59,6 +59,9 @@ public class Team {
     @ManyToOne
     Course course;
 
+    @Column(name = "creator")
+    String creator;
+
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "team_student",

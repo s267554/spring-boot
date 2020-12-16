@@ -1,7 +1,6 @@
 package it.polito.ai.virtuallabs.services;
 
 import it.polito.ai.virtuallabs.dtos.*;
-import it.polito.ai.virtuallabs.entities.Team;
 
 import java.util.List;
 
@@ -56,6 +55,10 @@ public interface VirtualLabsService {
     TeamDTO proposeTeam(String courseName, String teamName, List<String> studentIds);
 
     List<StudentDTO> getStudentsNotInTeam(String courseName);
+
+    List<TeamDTO> getTeamsOfCourseByStudentId(String courseName, String studentId);
+
+    List<StudentDTO> getStudentsOfCourseByTeamId(String courseName, String teamName);
 //
 //    TeamDTO getTeam(String courseName);
 

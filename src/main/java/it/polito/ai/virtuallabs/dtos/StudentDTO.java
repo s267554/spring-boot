@@ -31,4 +31,6 @@ public class StudentDTO extends RepresentationModel<StudentDTO> {
 
     private String teamName;
 
+    private String tempTeamName;
+
 }

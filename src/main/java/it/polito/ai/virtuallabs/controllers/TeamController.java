@@ -29,10 +29,26 @@ public class TeamController {
         this.notificationService = notificationService;
     }
 
+    // the one with the request param
     @GetMapping("/teams")
-    public List<TeamDTO> getAll(@PathVariable(name = "courseName") @NotBlank String courseName) {
-        final List<TeamDTO> teams = virtualLabsService.getTeamsOfCourse(courseName);
+    public List<TeamDTO> getTeams(@PathVariable(name = "courseName") @NotBlank String courseName,
+                                @RequestParam(name = "studentId", required = false) String studentId) {
+        if (studentId == null || studentId.isEmpty()) {
+            final List<TeamDTO> teams = virtualLabsService.getTeamsOfCourse(courseName);
+            return teams.stream()
+                    .map(ModelHelper::enrich)
+                    .collect(Collectors.toList());
+        }
+        final List<TeamDTO> teams = virtualLabsService.getTeamsOfCourseByStudentId(courseName, studentId);
         return teams.stream()
+                .map(ModelHelper::enrich)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/teams/{teamName}/students")
+    public List<StudentDTO> getStudentsByTeam(@PathVariable(name = "courseName") @NotBlank String courseName,
+                       @PathVariable(name = "teamName") @NotBlank String teamName) {
+        return virtualLabsService.getStudentsOfCourseByTeamId(courseName, teamName).stream()
                 .map(ModelHelper::enrich)
                 .collect(Collectors.toList());
     }

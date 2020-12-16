@@ -15,8 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -48,6 +51,9 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private TeamTokenRepository teamTokenRepository;
 
     @Override
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -335,6 +341,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         team.addMember(student);
         team.setCourse(course);
         team.setKey(key);
+        team.setCreator(student.getId());
 
         final List<Student> students = ids.stream()
                 .map(this::loadStudent)
@@ -389,6 +396,65 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         final List<Student> students = studentRepository.findStudentsNotInCourse(courseName);
 
         return mapToStudentDTOs(students);
+    }
+
+    @Override
+    // only student id=studentId is authorized to proceed
+    // @PreAuthorize("#studentId == authenticationFacade.getAuthentication().getName()")
+    public List<TeamDTO> getTeamsOfCourseByStudentId(String courseName, String studentId) {
+        // student must be enrolled within the course
+        final Course course = loadCourse(courseName);
+
+        final Student student = loadCurrentStudent();
+
+        if (!course.getStudents().contains(student)) {
+            throw new StudentNotEnrolledException("Student " + student.getId()
+                    + " is not enrolled into course " + courseName);
+        }
+
+        // return enabled team else any other temp team that includes such student
+
+        // must be better way to achieve all of this
+        Optional<Team> ret = course.getTeams().stream()
+                .filter((t) -> t.getMembers().contains(student))
+                .filter(Team::isEnabled)
+                .findAny();
+
+        if (ret.isPresent())
+            return Collections.singletonList(modelMapper.map(ret, TeamDTO.class));
+
+        return course.getTeams().stream()
+                .filter((t) -> t.getMembers().contains(student))
+                .map(t -> modelMapper.map(t, TeamDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<StudentDTO> getStudentsOfCourseByTeamId(String courseName, String teamName) {
+        // no further authorization needed?
+
+        final Course course = loadCourse(courseName);
+
+        final Student student = loadCurrentStudent();
+
+        if (!course.getStudents().contains(student)) {
+            throw new StudentNotEnrolledException("Student " + student.getId()
+                    + " is not enrolled into course " + courseName);
+        }
+
+        final Team team = loadTeam(courseName, teamName);
+
+        // fa schifo
+        return team.getMembers().stream()
+                .map(s -> modelMapper.map(s, StudentDTO.class))
+                .peek(s -> {
+                    if (team.isEnabled())
+                        s.setTeamName(teamName);
+                    if (teamTokenRepository.findAllByTeamIdAndStudent(new Team.Key(courseName, teamName), loadStudent(s.getId()))
+                            .isEmpty())
+                        s.setTempTeamName(teamName);
+                })
+                .collect(Collectors.toList());
     }
 
 //    @Override

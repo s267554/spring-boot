@@ -34,4 +34,6 @@ public class TeamDTO extends RepresentationModel<TeamDTO> {
 
     private boolean enabled;
 
+    private String creator;
+
 }

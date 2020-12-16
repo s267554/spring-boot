@@ -15,4 +15,8 @@ public class TeamToken extends Token {
     @JoinColumns({@JoinColumn(name = "course_name"), @JoinColumn(name = "team_name")})
     Team team;
 
+    @JoinColumn(name = "student_id")
+    @ManyToOne
+    Student student;
+
 }

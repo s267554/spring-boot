@@ -26,7 +26,7 @@ public final class ModelHelper {
         final Link teamsLink = WebMvcLinkBuilder
                 .linkTo(
                         WebMvcLinkBuilder.methodOn(TeamController.class)
-                                .getAll(name)
+                                .getTeams(name, "")
                 ).withSelfRel();
 
         courseDTO.add(enrolledLink);

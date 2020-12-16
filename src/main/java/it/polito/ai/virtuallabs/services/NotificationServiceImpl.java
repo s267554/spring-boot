@@ -3,10 +3,7 @@ package it.polito.ai.virtuallabs.services;
 import it.polito.ai.virtuallabs.controllers.NotificationController;
 import it.polito.ai.virtuallabs.dtos.TeamDTO;
 import it.polito.ai.virtuallabs.dtos.UserDTO;
-import it.polito.ai.virtuallabs.entities.AccountToken;
-import it.polito.ai.virtuallabs.entities.Team;
-import it.polito.ai.virtuallabs.entities.TeamToken;
-import it.polito.ai.virtuallabs.entities.User;
+import it.polito.ai.virtuallabs.entities.*;
 import it.polito.ai.virtuallabs.repositories.AccountTokenRepository;
 import it.polito.ai.virtuallabs.repositories.TeamRepository;
 import it.polito.ai.virtuallabs.repositories.TeamTokenRepository;
@@ -27,9 +24,11 @@ import javax.transaction.Transactional;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -164,19 +163,18 @@ public class NotificationServiceImpl implements NotificationService {
 
         final Timestamp timestamp = Timestamp.valueOf(expiryDate);
 
-        final List<TeamToken> tokens = ids.stream()
-                .map(id -> {
+        final List<TeamToken> tokens = new ArrayList<>();
+        for (User u : users) {
+            final String uuid = UUID.randomUUID().toString();
 
-                    final String uuid = UUID.randomUUID().toString();
+            final TeamToken token = new TeamToken();
+            token.setId(uuid);
+            token.setExpiryDate(timestamp);
+            token.setTeam(team);
+            token.setStudent((Student) u);
 
-                    final TeamToken token = new TeamToken();
-                    token.setId(uuid);
-                    token.setExpiryDate(timestamp);
-                    token.setTeam(team);
-
-                    return token;
-                })
-                .collect(Collectors.toList());
+            tokens.add(token);
+        }
 
         teamTokenRepository.saveAll(tokens);
 
