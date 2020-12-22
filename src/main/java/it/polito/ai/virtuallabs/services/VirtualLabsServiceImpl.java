@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -130,11 +132,13 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         // fetch students of the course
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
-        List<StudentDTO> studentDTOS = mapToStudentDTOs(course.getStudents());
-        for (StudentDTO s : studentDTOS) {
-            List<Team> teams = teamRepository.findByCourseAndStudent(courseName, s.getEmail());
-            if (teams.size() > 0)
-                s.setTeamName(teams.get(0).getKey().getName());
+        List<Student> students = course.getStudents();
+        List<StudentDTO> studentDTOS = new ArrayList<>();
+        for (Student s : students) {
+            StudentDTO studentDTO = modelMapper.map(s, StudentDTO.class);
+            Optional<Team> team = s.getTeams().stream().filter(t -> t.getKey().getCourseName().equals(courseName)).filter(Team::isEnabled).findAny();
+            team.ifPresent(value -> studentDTO.setTeamName(value.getKey().getName()));
+            studentDTOS.add(studentDTO);
         }
         return studentDTOS;
 
