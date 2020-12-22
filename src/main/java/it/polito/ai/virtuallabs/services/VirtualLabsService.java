@@ -56,7 +56,7 @@ public interface VirtualLabsService {
 
     List<StudentDTO> getStudentsNotInTeam(String courseName);
 
-    List<TeamDTO> getTeamsOfCourseByStudentId(String courseName, String studentId);
+    List<TeamEmbeddedDTO> getTeamsOfCourseByStudentId(String courseName, String studentId);
 
     List<StudentDTO> getStudentsOfCourseByTeamId(String courseName, String teamName);
 

@@ -1,6 +1,7 @@
 package it.polito.ai.virtuallabs;
 
 import it.polito.ai.virtuallabs.dtos.TeamDTO;
+import it.polito.ai.virtuallabs.dtos.TeamEmbeddedDTO;
 import it.polito.ai.virtuallabs.entities.Team;
 import org.jetbrains.annotations.NotNull;
 import org.modelmapper.ModelMapper;
@@ -37,6 +38,7 @@ public class VirtualLabsApplication {
     public ModelMapper modelMapper() {
         final ModelMapper modelMapper = new ModelMapper();
 
+        // type map inheritance ??
         modelMapper.typeMap(TeamDTO.class, Team.class)
                 .addMappings(
                         new PropertyMap<TeamDTO, Team>() {
@@ -49,10 +51,27 @@ public class VirtualLabsApplication {
                                         .map(source, destination.getKey());
                             }
                         });
+                //.include(TeamEmbeddedDTO.class, Team.class);
+        modelMapper.typeMap(TeamEmbeddedDTO.class, Team.class)
+                .addMappings(
+                        new PropertyMap<TeamEmbeddedDTO, Team>() {
+                            @Override
+                            protected void configure() {
+                                using(ctx -> new Team.Key(
+                                        ((TeamEmbeddedDTO) ctx.getSource()).getCourseName(),
+                                        ((TeamEmbeddedDTO) ctx.getSource()).getName())
+                                )
+                                        .map(source, destination.getKey());
+                            }
+                        });
 
         modelMapper.typeMap(Team.class, TeamDTO.class)
                 .addMapping(src -> src.getKey().getCourseName(), TeamDTO::setCourseName)
                 .addMapping(src -> src.getKey().getName(), TeamDTO::setName);
+                //.include(Team.class, TeamEmbeddedDTO.class);
+        modelMapper.typeMap(Team.class, TeamEmbeddedDTO.class)
+                .addMapping(src -> src.getKey().getCourseName(), TeamEmbeddedDTO::setCourseName)
+                .addMapping(src -> src.getKey().getName(), TeamEmbeddedDTO::setName);
 
         return modelMapper;
     }

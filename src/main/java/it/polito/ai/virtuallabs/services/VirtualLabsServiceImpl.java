@@ -401,7 +401,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
     @Override
     // only student id=studentId is authorized to proceed
     // @PreAuthorize("#studentId == authenticationFacade.getAuthentication().getName()")
-    public List<TeamDTO> getTeamsOfCourseByStudentId(String courseName, String studentId) {
+    public List<TeamEmbeddedDTO> getTeamsOfCourseByStudentId(String courseName, String studentId) {
         // student must be enrolled within the course
         final Course course = loadCourse(courseName);
 
@@ -420,13 +420,12 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
                 .filter(Team::isEnabled)
                 .findAny();
 
-        if (ret.isPresent())
-            return Collections.singletonList(modelMapper.map(ret, TeamDTO.class));
+        return ret.map(team -> Collections.singletonList(modelMapper.map(team, TeamEmbeddedDTO.class))).orElseGet(
+                () -> teamTokenRepository.findByStudentAndCourseName(studentId, courseName).stream()
+                .map(token -> modelMapper.map(token.getTeam(), TeamEmbeddedDTO.class))
+                .collect(Collectors.toList())
+        );
 
-        return course.getTeams().stream()
-                .filter((t) -> t.getMembers().contains(student))
-                .map(t -> modelMapper.map(t, TeamDTO.class))
-                .collect(Collectors.toList());
     }
 
     @Override

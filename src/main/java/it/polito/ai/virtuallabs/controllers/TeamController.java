@@ -2,6 +2,7 @@ package it.polito.ai.virtuallabs.controllers;
 
 import it.polito.ai.virtuallabs.dtos.StudentDTO;
 import it.polito.ai.virtuallabs.dtos.TeamDTO;
+import it.polito.ai.virtuallabs.dtos.TeamEmbeddedDTO;
 import it.polito.ai.virtuallabs.dtos.VirtualMachineDTO;
 import it.polito.ai.virtuallabs.models.ProposeTeamRequest;
 import it.polito.ai.virtuallabs.services.NotificationService;
@@ -31,8 +32,8 @@ public class TeamController {
 
     // the one with the request param
     @GetMapping("/teams")
-    public List<TeamDTO> getTeams(@PathVariable(name = "courseName") @NotBlank String courseName,
-                                @RequestParam(name = "studentId", required = false) String studentId) {
+    public List<?> getTeams(@PathVariable(name = "courseName") @NotBlank String courseName,
+                                              @RequestParam(name = "studentId", required = false) String studentId) {
         if (studentId == null || studentId.isEmpty()) {
             final List<TeamDTO> teams = virtualLabsService.getTeamsOfCourse(courseName);
             return teams.stream()
