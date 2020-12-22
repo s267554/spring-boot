@@ -461,16 +461,8 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         final Team team = loadTeam(courseName, teamName);
 
-        // fa schifo
         return team.getMembers().stream()
                 .map(s -> modelMapper.map(s, StudentDTO.class))
-                .peek(s -> {
-                    if (team.isEnabled())
-                        s.setTeamName(teamName);
-                    if (teamTokenRepository.findAllByTeamIdAndStudent(new Team.Key(courseName, teamName), loadStudent(s.getId()))
-                            .isEmpty())
-                        s.setTempTeamName(teamName);
-                })
                 .collect(Collectors.toList());
     }
 
