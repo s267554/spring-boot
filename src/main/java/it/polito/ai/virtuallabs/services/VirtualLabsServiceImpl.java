@@ -311,7 +311,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
     @Override
     @PreAuthorize("hasRole('ROLE_USER')")
-    public TeamDTO proposeTeam(String courseName, String teamName, List<String> studentIds) {
+    public TeamDTO proposeTeam(String courseName, String teamName, List<String> studentIds, Long timeout) {
 
         final Team.Key key = new Team.Key(courseName, teamName);
         if (teamRepository.existsById(key)) {
@@ -331,10 +331,12 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
                     + " is not enrolled into course " + courseName);
         }
 
+        // TODO: creator must be included in this calculation -- remove filter or add
         final List<String> ids = studentIds.stream()
                 .distinct()
                 .filter((id) -> !id.equals(student.getId()) || !id.equals(student.getEmail()))
                 .collect(Collectors.toList());
+        ids.add(student.getId());
 
         if (ids.size() > course.getMax() || ids.size() < course.getMin()) {
             throw new IncorrectNumberOfStudentsException("Team " + teamName + " must have max "
@@ -342,10 +344,18 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         }
 
         final Team team = new Team();
-        team.addMember(student);
+        //team.addMember(student);
         team.setCourse(course);
         team.setKey(key);
         team.setCreator(student.getId());
+        team.setConfirmedIds(Collections.singletonList(student.getId()));
+
+        final LocalDateTime expiryDate = LocalDateTime.now()
+                .plus(timeout, ChronoUnit.SECONDS);
+
+        final Timestamp timestamp = Timestamp.valueOf(expiryDate);
+
+        team.setExpiryDate(timestamp);
 
         final List<Student> students = ids.stream()
                 .map(this::loadStudent)

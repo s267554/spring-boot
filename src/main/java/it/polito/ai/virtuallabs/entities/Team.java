@@ -3,12 +3,14 @@ package it.polito.ai.virtuallabs.entities;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Type;
 import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -61,6 +63,20 @@ public class Team {
 
     @Column(name = "creator")
     String creator;
+
+    @ElementCollection
+    List<String> confirmedIds;
+
+    @ElementCollection
+    List<String> rejectedIds;
+
+    @Column(name = "invalid")
+    boolean invalid;
+
+    // inefficient
+    @Type(type = "timestamp")
+    @Column(name = "expiry_date", nullable = false, updatable = false)
+    Date expiryDate;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(

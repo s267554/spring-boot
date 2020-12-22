@@ -6,6 +6,8 @@ import org.springframework.hateoas.RepresentationModel;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import java.util.Date;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -35,5 +37,13 @@ public class TeamDTO extends RepresentationModel<TeamDTO> {
     private boolean enabled;
 
     private String creator;
+
+    private List<String> confirmedIds;
+
+    private List<String> rejectedIds;
+
+    private boolean invalid;
+
+    private Date expiryDate;
 
 }

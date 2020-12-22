@@ -8,6 +8,7 @@ import it.polito.ai.virtuallabs.repositories.AccountTokenRepository;
 import it.polito.ai.virtuallabs.repositories.TeamRepository;
 import it.polito.ai.virtuallabs.repositories.TeamTokenRepository;
 import it.polito.ai.virtuallabs.repositories.UserRepository;
+import it.polito.ai.virtuallabs.services.exceptions.TeamNotEnabledException;
 import it.polito.ai.virtuallabs.services.exceptions.TeamNotFoundException;
 import it.polito.ai.virtuallabs.services.exceptions.TokenExpiredException;
 import it.polito.ai.virtuallabs.services.exceptions.TokenNotFoundException;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -118,17 +118,34 @@ public class NotificationServiceImpl implements NotificationService {
     public boolean confirmTeam(String token) {
         final TeamToken t = teamTokenRepository.findById(token)
                 .orElseThrow(TokenNotFoundException::new);
-        if (t.getExpiryDate().compareTo(new Date()) < 0) {
-            teamTokenRepository.deleteById(token);
-            throw new TokenExpiredException();
-        }
 
         final Team team = t.getTeam();
         final Team.Key key = t.getTeam().getKey();
 
-        teamTokenRepository.deleteById(token);
 
-        if (!teamTokenRepository.findAllByTeamId(key).isEmpty()) {
+        if (t.getExpiryDate().compareTo(new Date()) < 0) {
+            // can't delete tokens
+            // teamTokenRepository.deleteById(token);
+            team.setInvalid(true);
+            teamRepository.save(team);
+            throw new TokenExpiredException();
+        }
+
+
+        if (team.isInvalid())
+            // TODO: create new exception
+            throw new TeamNotEnabledException("Team is not valid anymore");
+
+        // can't delete tokens
+        // teamTokenRepository.deleteById(token);
+
+        // set confirmed members NOT based on existing tokens
+        final List<String> newConfirmed = team.getConfirmedIds();
+        newConfirmed.add(t.getStudent().getId());
+        team.setConfirmedIds(newConfirmed);
+
+        if (newConfirmed.size() != team.getMembers().size()) {
+            teamRepository.save(team);
             return false;
         }
 
@@ -142,9 +159,18 @@ public class NotificationServiceImpl implements NotificationService {
     public void rejectTeam(String token) {
         final TeamToken t = teamTokenRepository.findById(token)
                 .orElseThrow(TokenNotFoundException::new);
-        final Team.Key key = t.getTeam().getKey();
-        teamTokenRepository.deleteAllByTeamId(key);
-        teamRepository.deleteById(key);
+        final Team team = t.getTeam();
+        final Team.Key key = team.getKey();
+
+        // tokens can be deleted by the user via deleteTeam
+        // teamTokenRepository.deleteAllByTeamId(key);
+        // teams can NOT be deleted
+        List<String> rejected = team.getRejectedIds();
+        rejected.add(t.getStudent().getId());
+        team.setRejectedIds(rejected);
+
+        team.setInvalid(true);
+        teamRepository.save(team);
     }
 
     @Async
@@ -152,6 +178,9 @@ public class NotificationServiceImpl implements NotificationService {
     public void notifyTeam(@NotNull TeamDTO teamDTO, @NotNull List<String> ids, Long timeout) {
         final Team team = teamRepository.findById(new Team.Key(teamDTO.getCourseName(), teamDTO.getName()))
                 .orElseThrow(TeamNotFoundException::new);
+
+        // add creator for token deleting purposes
+        ids.add(teamDTO.getCreator());
 
         final List<User> users = ids.stream().map((id) ->
                 userRepository.findByUsername(id)

@@ -88,7 +88,7 @@ public class TeamController {
 
         final List<String> ids = request.getIds();
 
-        final TeamDTO t = virtualLabsService.proposeTeam(courseName, request.getName(), ids);
+        final TeamDTO t = virtualLabsService.proposeTeam(courseName, request.getName(), ids, request.getTimeout());
 
         notificationService.notifyTeam(t, ids, request.getTimeout());
 

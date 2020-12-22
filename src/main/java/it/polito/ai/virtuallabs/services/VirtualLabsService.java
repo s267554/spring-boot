@@ -52,7 +52,7 @@ public interface VirtualLabsService {
 
     void updatePaper(Long assignmentId, String studentId, PaperDTO paperDTO);
 
-    TeamDTO proposeTeam(String courseName, String teamName, List<String> studentIds);
+    TeamDTO proposeTeam(String courseName, String teamName, List<String> studentIds, Long timeout);
 
     List<StudentDTO> getStudentsNotInTeam(String courseName);
 
