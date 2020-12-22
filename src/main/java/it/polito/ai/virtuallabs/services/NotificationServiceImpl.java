@@ -200,4 +200,17 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
+    @Override
+    public void deleteTeam(String token) {
+
+        final TeamToken t = teamTokenRepository.findById(token)
+                .orElseThrow(TokenNotFoundException::new);
+        final Team team = t.getTeam();
+
+        teamTokenRepository.deleteById(token);
+
+        team.setInvalid(true);
+        teamRepository.save(team);
+    }
+
 }

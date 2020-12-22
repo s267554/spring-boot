@@ -39,7 +39,7 @@ public class TeamController {
                     .map(ModelHelper::enrich)
                     .collect(Collectors.toList());
         }
-        final List<TeamDTO> teams = virtualLabsService.getTeamsOfCourseByStudentId(courseName, studentId);
+        final List<TeamEmbeddedDTO> teams = virtualLabsService.getTeamsOfCourseByStudentId(courseName, studentId);
         return teams.stream()
                 .map(ModelHelper::enrich)
                 .collect(Collectors.toList());
@@ -58,6 +58,27 @@ public class TeamController {
                        @PathVariable(name = "teamName") @NotBlank String teamName,
                        @RequestBody @Valid TeamDTO teamDTO) {
         virtualLabsService.updateTeam(courseName, teamName, teamDTO);
+    }
+
+    @GetMapping("/teams/{teamName}/confirmTeam")
+    public void confirmTeam(@PathVariable(name = "courseName") @NotBlank String courseName,
+                            @PathVariable(name = "teamName") @NotBlank String teamName) {
+
+        notificationService.confirmTeam(virtualLabsService.getTokenByCourseAndTeam(courseName, teamName));
+    }
+
+    @GetMapping("/teams/{teamName}/rejectTeam")
+    public void rejectTeam(@PathVariable(name = "courseName") @NotBlank String courseName,
+                            @PathVariable(name = "teamName") @NotBlank String teamName) {
+
+        notificationService.rejectTeam(virtualLabsService.getTokenByCourseAndTeam(courseName, teamName));
+    }
+
+    @GetMapping("/teams/{teamName}/deleteTeam")
+    public void deleteTeam(@PathVariable(name = "courseName") @NotBlank String courseName,
+                           @PathVariable(name = "teamName") @NotBlank String teamName) {
+
+        notificationService.deleteTeam(virtualLabsService.getTokenByCourseAndTeam(courseName, teamName));
     }
 
     @PostMapping("/proposeTeam")

@@ -457,6 +457,23 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
                 .collect(Collectors.toList());
     }
 
+    // an utility function to retrieve tokenid and call accept/reject team withous checking email
+    @Override
+    public String getTokenByCourseAndTeam(String courseName, String teamName) {
+        final Student student = loadCurrentStudent();
+        final Course course = loadCourse(courseName);
+        if (!course.getStudents().contains(student)) {
+            throw new StudentNotAuthorizedException("Student " + student.getId()
+                    + " cannot access the course " + courseName);
+        }
+        final Team team = loadTeam(courseName, teamName);
+        if (!team.getMembers().contains(student)) {
+            throw new StudentNotAuthorizedException("Student " + student.getId()
+                    + " cannot access the team " + teamName);
+        }
+        return teamTokenRepository.findByTeamIdAndStudent(team.getKey(), student).getId();
+    }
+
 //    @Override
 //    @PreAuthorize("hasRole('ROLE_USER')")
 //    public TeamDTO getTeam(String courseName) {

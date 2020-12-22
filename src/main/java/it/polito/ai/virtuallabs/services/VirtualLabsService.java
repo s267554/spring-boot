@@ -59,6 +59,8 @@ public interface VirtualLabsService {
     List<TeamDTO> getTeamsOfCourseByStudentId(String courseName, String studentId);
 
     List<StudentDTO> getStudentsOfCourseByTeamId(String courseName, String teamName);
+
+    String getTokenByCourseAndTeam(String courseName, String teamName);
 //
 //    TeamDTO getTeam(String courseName);
 

@@ -18,7 +18,14 @@ public interface TeamTokenRepository extends CrudRepository<TeamToken, String> {
     @Query("delete from TeamToken t where t.team.key = :key")
     void deleteAllByTeamId(Team.Key key);
 
-    @Query("select t from TeamToken t where t.team.key = :key and t.student = :s")
-    List<TeamToken> findAllByTeamIdAndStudent(Team.Key key, Student s);
+    // delete method?
+    @Query("select t.student from TeamToken t where t.team.key = :key")
+    List<String> findPending(Team.Key key);
+
+    @Query("select t from TeamToken t where t.team.key = :key and t.student = :student")
+    TeamToken findByTeamIdAndStudent(Team.Key key, Student student);
+
+    @Query("select t from TeamToken t where t.student.id = :studentId and t.team.course.name = :courseName")
+    List<TeamToken> findByStudentAndCourseName(String studentId, String courseName);
 
 }

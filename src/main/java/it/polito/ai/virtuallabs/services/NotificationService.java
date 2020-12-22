@@ -19,4 +19,5 @@ public interface NotificationService {
 
     void notifyTeam(TeamDTO teamDTO, List<String> ids, Long timeout);
 
+    void deleteTeam(String tokenByCourseAndTeam);
 }
