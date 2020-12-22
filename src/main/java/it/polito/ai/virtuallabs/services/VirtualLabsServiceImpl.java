@@ -388,18 +388,21 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
     @Override
     public List<StudentDTO> getStudentsNotInTeam(String courseName) {
         final Course course = loadCourse(courseName);
+        final String id;
 
         if (isCurrentUserIsAdmin()) {
 
             final Professor professor = loadCurrentProfessor();
+            id = professor.getId();
             if (!course.getProfessors().contains(professor)) {
                 throw new ProfessorNotAuthorizedException("Professor " + professor.getId()
-                        + " is not authorized to access teh course " + courseName);
+                        + " is not authorized to access the course " + courseName);
             }
 
         } else {
 
             final Student student = loadCurrentStudent();
+            id = student.getId();
             if (!course.getStudents().contains(student)) {
                 throw new StudentNotAuthorizedException("Student " + student.getId()
                         + " is not authorized to access the course " + courseName);
@@ -407,7 +410,8 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         }
 
-        final List<Student> students = studentRepository.findStudentsNotInCourse(courseName);
+        final List<Student> students = studentRepository.findStudentsNotInTeam(courseName)
+                .stream().filter(s -> !s.getId().equals(id)).collect(Collectors.toList());
 
         return mapToStudentDTOs(students);
     }
