@@ -105,6 +105,17 @@ public class TeamController {
                 .collect(Collectors.toList());
     }
 
+    @PostMapping("/teams/{teamName}/createVM")
+    public VirtualMachineDTO createVM(@PathVariable(name = "courseName") @NotBlank String courseName,
+                                      @PathVariable(name = "teamName") @NotBlank String teamName,
+                                      @RequestBody @NotNull VirtualMachineDTO virtualMachineDTO) {
+
+        final VirtualMachineDTO v = virtualLabsService.addVMToTeam(courseName, teamName, virtualMachineDTO);
+
+        return ModelHelper.enrich(v);
+
+    }
+
     @GetMapping("/notInTeam")
     public List<StudentDTO> getStudentsNotInTeam(@PathVariable(name = "courseName") @NotBlank String courseName) {
         return virtualLabsService.getStudentsNotInTeam(courseName).stream()

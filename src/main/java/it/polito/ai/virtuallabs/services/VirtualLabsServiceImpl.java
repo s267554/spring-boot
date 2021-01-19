@@ -16,10 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -199,9 +196,27 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
     }
 
     @Override
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public List<VirtualMachineDTO> getVMsOfTeam(String courseName, String teamName) {
-        final Team team = loadTeamIfProfessorIsAuthorized(courseName, teamName);
+        final Team team = loadTeam(courseName, teamName);
+        final Course course = loadCourse(courseName);
+
+        if (isCurrentUserIsAdmin()) {
+
+            final Professor professor = loadCurrentProfessor();
+            if (!course.getProfessors().contains(professor)) {
+                throw new ProfessorNotAuthorizedException("Professor " + professor.getId()
+                        + " is not authorized to access the course " + courseName);
+            }
+
+        } else {
+
+            final Student student = loadCurrentStudent();
+            if (!team.getMembers().contains(student)) {
+                throw new StudentNotAuthorizedException("Student " + student.getId()
+                        + " is not authorized to access the team " + teamName);
+            }
+
+        }
 
         return team.getVirtualMachines().stream()
                 .map((vm) -> modelMapper.map(vm, VirtualMachineDTO.class))
@@ -481,6 +496,55 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
                     + " cannot access the team " + teamName);
         }
         return teamTokenRepository.findByTeamIdAndStudent(team.getKey(), student).getId();
+    }
+
+    @Override
+    public VirtualMachineDTO addVMToTeam(String courseName, String teamName, VirtualMachineDTO vm) {
+        final Student student = loadCurrentStudent();
+        final Course course = loadCourse(courseName);
+        if (!course.getStudents().contains(student)) {
+            throw new StudentNotAuthorizedException("Student " + student.getId()
+                    + " cannot access the course " + courseName);
+        }
+        final Team team = loadTeam(courseName, teamName);
+        if (!team.getMembers().contains(student)) {
+            throw new StudentNotAuthorizedException("Student " + student.getId()
+                    + " cannot access the team " + teamName);
+        }
+
+        // Fetch all vms in order to calculate the current resources used by the team.
+        final List<VirtualMachine> vms = team.getVirtualMachines();
+
+        int totVcpu = vms.stream().map(VirtualMachine::getVcpu).reduce(0, Integer::sum);
+        double space = vms.stream().map(VirtualMachine::getSpace).reduce(0.0, Double::sum);
+        double ram = vms.stream().map(VirtualMachine::getRam).reduce(0.0, Double::sum);
+
+        // If the new resources are less than current used resources, the team cannot be updated
+        if (totVcpu + vm.getVcpu() > team.getVcpu() || space + vm.getSpace() > team.getSpace() || ram + vm.getRam() > team.getRam()) {
+            throw new TeamResourcesExceededException("The new resources cannot be more than current limit");
+        }
+
+        VirtualMachine virtualMachine = modelMapper.map(vm, VirtualMachine.class);
+        virtualMachine.setTeam(team);
+        virtualMachine.setVmModel(team.getVirtualMachineModel());
+        virtualMachine.setOwners(Collections.singletonList(student));
+
+        return modelMapper.map(virtualMachineRepository.save(virtualMachine), VirtualMachineDTO.class);
+    }
+
+    @Override
+    public void addStudentToVM(Long id, String studentId) {
+
+    }
+
+    @Override
+    public void updateVM(Long id) {
+
+    }
+
+    @Override
+    public PaperVersionDTO addPaperVersion(Long assignmentId, PaperVersionDTO paperVersionDTO) {
+        return null;
     }
 
 //    @Override

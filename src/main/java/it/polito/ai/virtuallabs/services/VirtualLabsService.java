@@ -84,19 +84,17 @@ public interface VirtualLabsService {
 //
 //    void updateVMModelOfTeam(String courseName, String teamName, VirtualMachineModelDTO vmmodel);
 //
-//    // VMs
-//
-//    VirtualMachineDTO addVMToTeam(String courseName, String teamName, VirtualMachineDTO vm);
-//
-//    void addStudentToVM(Long id, Student studentId);
-//
-//    void updateVM(Long id);
-//
-//    void addStudentToVM(Long id, String studentId);
-//
-//    // Paper Versions
-//
-//    PaperVersionDTO addPaperVersion(Long assignmentId, PaperVersionDTO paperVersionDTO);
+    // VMs
+
+    VirtualMachineDTO addVMToTeam(String courseName, String teamName, VirtualMachineDTO vm);
+
+    void addStudentToVM(Long id, String studentId);
+
+    void updateVM(Long id);
+
+    // Paper Versions
+
+    PaperVersionDTO addPaperVersion(Long assignmentId, PaperVersionDTO paperVersionDTO);
 
 
 }
