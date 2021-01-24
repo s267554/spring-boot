@@ -519,7 +519,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         double space = vms.stream().map(VirtualMachine::getSpace).reduce(0.0, Double::sum);
         double ram = vms.stream().map(VirtualMachine::getRam).reduce(0.0, Double::sum);
 
-        // If the new resources are less than current used resources, the team cannot be updated
+        // If the new resources are less than current used resources, the team cannot be created
         if (totVcpu + vm.getVcpu() > team.getVcpu() || space + vm.getSpace() > team.getSpace() || ram + vm.getRam() > team.getRam()) {
             throw new TeamResourcesExceededException("The new resources cannot be more than current limit");
         }
@@ -538,9 +538,47 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
     }
 
     @Override
-    public void updateVM(Long id) {
+    public VirtualMachineDTO updateVM(String courseName, String teamName, VirtualMachineDTO vm, Long id) {
+        final Student student = loadCurrentStudent();
+        final Course course = loadCourse(courseName);
+        if (!course.getStudents().contains(student)) {
+            throw new StudentNotAuthorizedException("Student " + student.getId()
+                    + " cannot access the course " + courseName);
+        }
+        final Team team = loadTeam(courseName, teamName);
+        if (!team.getMembers().contains(student)) {
+            throw new StudentNotAuthorizedException("Student " + student.getId()
+                    + " cannot access the team " + teamName);
+        }
 
+        // Fetch all vms in order to calculate the current resources used by the team.
+        // Remove old vm from set
+        final List<VirtualMachine> vms = team.getVirtualMachines().
+                stream().filter(v -> !v.getId().equals(id)).collect(Collectors.toList());
+
+        int totVcpu = vms.stream().map(VirtualMachine::getVcpu).reduce(0, Integer::sum);
+        double space = vms.stream().map(VirtualMachine::getSpace).reduce(0.0, Double::sum);
+        double ram = vms.stream().map(VirtualMachine::getRam).reduce(0.0, Double::sum);
+
+        VirtualMachine virtualMachine = virtualMachineRepository.getOne(id);
+        //TODO: se non esiste lancio eccezione
+        
+        // If the new resources are less than current used resources, the team cannot be updated
+        if (totVcpu + vm.getVcpu() > team.getVcpu() ||
+                space + vm.getSpace() > team.getSpace() ||
+                ram + vm.getRam()  > team.getRam()) {
+            throw new TeamResourcesExceededException("The new resources cannot be more than current limit");
+        }
+
+        virtualMachine.setVcpu(vm.getVcpu());
+        virtualMachine.setRam(vm.getRam());
+        virtualMachine.setSpace(vm.getSpace());
+        //TODO: add owners to vmdto
+       // virtualMachine.setOwners();
+
+        return modelMapper.map(virtualMachineRepository.save(virtualMachine), VirtualMachineDTO.class);
     }
+
 
     @Override
     public PaperVersionDTO addPaperVersion(Long assignmentId, PaperVersionDTO paperVersionDTO) {

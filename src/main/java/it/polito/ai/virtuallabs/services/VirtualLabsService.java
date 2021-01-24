@@ -90,7 +90,7 @@ public interface VirtualLabsService {
 
     void addStudentToVM(Long id, String studentId);
 
-    void updateVM(Long id);
+    VirtualMachineDTO updateVM(String courseName, String teamName, VirtualMachineDTO vm, Long id);
 
     // Paper Versions
 

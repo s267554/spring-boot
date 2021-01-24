@@ -116,6 +116,18 @@ public class TeamController {
 
     }
 
+    @PutMapping("/teams/{teamName}/vms/{id}")
+    public VirtualMachineDTO updateVM(@PathVariable(name = "courseName") @NotBlank String courseName,
+                                      @PathVariable(name = "teamName") @NotBlank String teamName,
+                                      @PathVariable(name = "id") @NotBlank Long id,
+                                      @RequestBody @NotNull VirtualMachineDTO virtualMachineDTO) {
+
+        final VirtualMachineDTO v = virtualLabsService.updateVM(courseName, teamName, virtualMachineDTO, id);
+
+        return ModelHelper.enrich(v);
+
+    }
+
     @GetMapping("/notInTeam")
     public List<StudentDTO> getStudentsNotInTeam(@PathVariable(name = "courseName") @NotBlank String courseName) {
         return virtualLabsService.getStudentsNotInTeam(courseName).stream()
