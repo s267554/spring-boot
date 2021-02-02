@@ -119,7 +119,7 @@ public class TeamController {
     @PutMapping("/teams/{teamName}/vms/{id}")
     public VirtualMachineDTO updateVM(@PathVariable(name = "courseName") @NotBlank String courseName,
                                       @PathVariable(name = "teamName") @NotBlank String teamName,
-                                      @PathVariable(name = "id") @NotBlank Long id,
+                                      @PathVariable(name = "id") Long id,
                                       @RequestBody @NotNull VirtualMachineDTO virtualMachineDTO) {
 
         final VirtualMachineDTO v = virtualLabsService.updateVM(courseName, teamName, virtualMachineDTO, id);
