@@ -92,6 +92,8 @@ public interface VirtualLabsService {
 
     VirtualMachineDTO updateVM(String courseName, String teamName, VirtualMachineDTO vm, Long id);
 
+    void deleteVM(String courseName, String teamName, Long id);
+
     // Paper Versions
 
     PaperVersionDTO addPaperVersion(Long assignmentId, PaperVersionDTO paperVersionDTO);

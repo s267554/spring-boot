@@ -128,6 +128,15 @@ public class TeamController {
 
     }
 
+    @DeleteMapping("/teams/{teamName}/vms/{id}")
+    public void deleteVM(@PathVariable(name = "courseName") @NotBlank String courseName,
+                                      @PathVariable(name = "teamName") @NotBlank String teamName,
+                                      @PathVariable(name = "id") Long id) {
+
+        virtualLabsService.deleteVM(courseName, teamName, id);
+
+    }
+
     @GetMapping("/notInTeam")
     public List<StudentDTO> getStudentsNotInTeam(@PathVariable(name = "courseName") @NotBlank String courseName) {
         return virtualLabsService.getStudentsNotInTeam(courseName).stream()

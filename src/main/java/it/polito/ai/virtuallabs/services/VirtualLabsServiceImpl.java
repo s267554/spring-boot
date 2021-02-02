@@ -562,7 +562,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         VirtualMachine virtualMachine = virtualMachineRepository.getOne(id);
         //TODO: se non esiste lancio eccezione
-        
+
         // If the new resources are less than current used resources, the team cannot be updated
         if (totVcpu + vm.getVcpu() > team.getVcpu() ||
                 space + vm.getSpace() > team.getSpace() ||
@@ -577,6 +577,25 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
        // virtualMachine.setOwners();
 
         return modelMapper.map(virtualMachineRepository.save(virtualMachine), VirtualMachineDTO.class);
+    }
+
+    @Override
+    public void deleteVM(String courseName, String teamName, Long id) {
+        final Student student = loadCurrentStudent();
+        final Course course = loadCourse(courseName);
+        if (!course.getStudents().contains(student)) {
+            throw new StudentNotAuthorizedException("Student " + student.getId()
+                    + " cannot access the course " + courseName);
+        }
+        final Team team = loadTeam(courseName, teamName);
+        if (!team.getMembers().contains(student)) {
+            throw new StudentNotAuthorizedException("Student " + student.getId()
+                    + " cannot access the team " + teamName);
+        }
+
+        VirtualMachine virtualMachine = virtualMachineRepository.getOne(id);
+        virtualMachineRepository.delete(virtualMachine);
+
     }
 
 
