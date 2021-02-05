@@ -18,4 +18,6 @@ public class VirtualMachineDTO extends RepresentationModel<VirtualMachineDTO> {
 
     private String url;
 
+    private boolean active;
+
 }

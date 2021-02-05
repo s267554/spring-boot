@@ -518,9 +518,16 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         int totVcpu = vms.stream().map(VirtualMachine::getVcpu).reduce(0, Integer::sum);
         double space = vms.stream().map(VirtualMachine::getSpace).reduce(0.0, Double::sum);
         double ram = vms.stream().map(VirtualMachine::getRam).reduce(0.0, Double::sum);
+        long totvms = vms.size();
+
+
+        // force new to be powered off
+        vm.setActive(false);
 
         // If the new resources are less than current used resources, the team cannot be created
-        if (totVcpu + vm.getVcpu() > team.getVcpu() || space + vm.getSpace() > team.getSpace() || ram + vm.getRam() > team.getRam()) {
+        if (totVcpu + vm.getVcpu() > team.getVcpu() ||
+                space + vm.getSpace() > team.getSpace() ||
+                ram + vm.getRam() > team.getRam() || totvms + 1 > team.getMaxVMs()) {
             throw new TeamResourcesExceededException("The new resources cannot be more than current limit");
         }
 
@@ -570,9 +577,14 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
             throw new TeamResourcesExceededException("The new resources cannot be more than current limit");
         }
 
+        // maxactive costraint
+        if (vm.isActive() && vms.stream().filter(VirtualMachine::isActive).count() + 1 > team.getMaxVMsActive())
+            throw new TeamResourcesExceededException("The new resources cannot be more than current limit");
+
         virtualMachine.setVcpu(vm.getVcpu());
         virtualMachine.setRam(vm.getRam());
         virtualMachine.setSpace(vm.getSpace());
+        virtualMachine.setActive(vm.isActive());
         //TODO: add owners to vmdto
        // virtualMachine.setOwners();
 
