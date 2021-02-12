@@ -772,7 +772,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
             throws PaperNotFoundException, ProfessorNotFoundException, ProfessorNotAuthorizedException {
         final Professor professor = loadCurrentProfessor();
         final Paper paper = loadPaper(assignmentId, username);
-        if (paper.getAssignment().getCourse().getProfessors().contains(professor)) {
+        if (!paper.getAssignment().getCourse().getProfessors().contains(professor)) {
             throw new ProfessorNotAuthorizedException("Professor " + professor.getId()
                     + " is not authorized to access paper");
         }
@@ -801,7 +801,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
             throws AssignmentNotFoundException, ProfessorNotFoundException, ProfessorNotAuthorizedException {
         final Professor professor = loadCurrentProfessor();
         final Assignment assignment = loadAssignment(id);
-        if (assignment.getCourse().getProfessors().contains(professor)) {
+        if (!assignment.getCourse().getProfessors().contains(professor)) {
             throw new ProfessorNotAuthorizedException("Professor " + professor.getId() +
                     " is not authorized to access the assignment " + id);
         }
