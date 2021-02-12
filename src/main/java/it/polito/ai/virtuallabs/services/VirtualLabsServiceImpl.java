@@ -650,8 +650,10 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         virtualMachine.setRam(vm.getRam());
         virtualMachine.setSpace(vm.getSpace());
         virtualMachine.setActive(vm.isActive());
-        //TODO: add owners to vmdto
-       // virtualMachine.setOwners();
+        virtualMachine.setOwners(team.getMembers()
+                .stream().filter(member -> vm.getOwners().stream().map(StudentDTO::getId)
+                        .anyMatch(stid -> member.getId().equals(stid)))
+                .collect(Collectors.toList()));
 
         return modelMapper.map(virtualMachineRepository.save(virtualMachine), VirtualMachineDTO.class);
     }
