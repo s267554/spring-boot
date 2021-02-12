@@ -69,4 +69,8 @@ public final class ModelHelper {
     public static PaperDTO enrich(PaperDTO paperDTO) {
         return paperDTO;
     }
+
+    public static PaperVersionDTO enrich(PaperVersionDTO paperVersionDTO) {
+        return paperVersionDTO;
+    }
 }

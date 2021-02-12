@@ -1,5 +1,6 @@
 package it.polito.ai.virtuallabs.controllers;
 
+import it.polito.ai.virtuallabs.dtos.AssignmentDTO;
 import it.polito.ai.virtuallabs.dtos.CourseDTO;
 import it.polito.ai.virtuallabs.dtos.StudentDTO;
 import it.polito.ai.virtuallabs.services.VirtualLabsService;
@@ -85,6 +86,26 @@ public class CourseController {
         return students.stream()
                 .map(ModelHelper::enrich)
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/{courseName}/assignments")
+    public List<AssignmentDTO> getAssignments(@PathVariable(name = "courseName") @NotBlank String courseName) {
+        final List<AssignmentDTO> assignmentDTOS = virtualLabsService.getAssignmentsOfCourse(courseName);
+        return assignmentDTOS.stream()
+                .map(ModelHelper::enrich)
+                .collect(Collectors.toList());
+    }
+
+    @PostMapping("/{courseName}/assignments")
+    public AssignmentDTO createAssignment(@PathVariable(name = "courseName") @NotBlank String courseName,
+                                          @Valid @RequestBody AssignmentDTO assignmentDTO) {
+        final AssignmentDTO a = virtualLabsService.addAssignmentToCourse(courseName, assignmentDTO);
+
+        List<String> studentIds = virtualLabsService.getStudentsOfCourse(courseName)
+                .stream().map(StudentDTO::getId).collect(Collectors.toList());
+        virtualLabsService.addPaper(a.getId(), studentIds);
+
+        return ModelHelper.enrich(a);
     }
 
 }
