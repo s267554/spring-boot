@@ -101,4 +101,5 @@ public interface VirtualLabsService {
     PaperVersionDTO addPaperVersion(Long assignmentId, PaperVersionDTO paperVersionDTO);
 
 
+    PaperDTO readPaper(Long assignmentId);
 }

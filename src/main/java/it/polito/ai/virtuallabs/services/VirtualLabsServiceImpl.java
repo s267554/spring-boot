@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -47,6 +46,9 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
     @Autowired
     private PaperRepository paperRepository;
+
+    @Autowired
+    private PaperVersionRepository paperVersionRepository;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -253,9 +255,23 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
     }
 
     @Override
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public List<AssignmentDTO> getAssignmentsOfCourse(String courseName) {
-        final Course course = loadCourseIfProfessorIsAuthorized(courseName);
+
+        Course course;
+
+        if(isCurrentUserIsAdmin()) {
+            course = loadCourseIfProfessorIsAuthorized(courseName);
+        }
+        else {
+            course = loadCourse(courseName);
+            final Student student = loadCurrentStudent();
+
+            if (!course.getStudents().contains(student)) {
+                throw new StudentNotAuthorizedException("Student " + student.getId()
+                        + " is not authorized to access the course " + courseName);
+            }
+
+        }
 
         return course.getAssignments().stream()
                 .map((a) -> modelMapper.map(a, AssignmentDTO.class))
@@ -263,19 +279,50 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
     }
 
     @Override
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public List<PaperDTO> getPapersOfAssignment(Long assignmentId) {
-        final Assignment assignment = loadAssignmentIfProfessorIsAuthorized(assignmentId);
 
-        return assignment.getPapers().stream()
-                .map((p) -> modelMapper.map(p, PaperDTO.class))
-                .collect(Collectors.toList());
+        Assignment assignment;
+
+        if(isCurrentUserIsAdmin()) {
+            assignment = loadAssignmentIfProfessorIsAuthorized(assignmentId);
+            return assignment.getPapers().stream()
+                    .map((p) -> modelMapper.map(p, PaperDTO.class))
+                    .collect(Collectors.toList());
+        }
+        else {
+            assignment = loadAssignment(assignmentId);
+            final Student student = loadCurrentStudent();
+
+            if (!assignment.getCourse().getStudents().contains(student)) {
+                throw new StudentNotAuthorizedException("Student " + student.getId()
+                        + " is not authorized to access the course " + assignment.getCourse().getName());
+            }
+            return assignment.getPapers().stream()
+                    .filter(paper -> paper.getStudent().equals(student))
+                    .map((p) -> modelMapper.map(p, PaperDTO.class))
+                    .collect(Collectors.toList());
+
+        }
+
     }
 
     @Override
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public List<PaperVersionDTO> getPaperVersionsOfPaper(Long assignmentId, String username) {
-        final Paper paper = loadPaperIfProfessorIsAuthorized(assignmentId, username);
+
+        Paper paper;
+
+        if(isCurrentUserIsAdmin()) {
+            paper = loadPaperIfProfessorIsAuthorized(assignmentId, username);
+        }
+        else {
+            paper = loadPaper(assignmentId, username);
+            final Student student = loadCurrentStudent();
+
+            if (!paper.getStudent().equals(student)) {
+                throw new StudentNotAuthorizedException("Student " + student.getId()
+                        + " is not authorized to access the paper");
+            }
+        }
 
         return paper.getVersions().stream()
                 .map((v) -> modelMapper.map(v, PaperVersionDTO.class))
@@ -339,7 +386,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         modelMapper.map(paperDTO, paper);
 
-        paperRepository.save(paper);
+        return modelMapper.map(paperRepository.save(paper), PaperDTO.class);
     }
 
     @Override
@@ -630,8 +677,63 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
 
     @Override
+    @PreAuthorize("hasRole('ROLE_USER')")
     public PaperVersionDTO addPaperVersion(Long assignmentId, PaperVersionDTO paperVersionDTO) {
-        return null;
+        final Assignment assignment = loadAssignment(assignmentId);
+        final Student student = loadCurrentStudent();
+
+        if (!assignment.getCourse().getStudents().contains(student)) {
+            throw new StudentNotAuthorizedException("Student " + student.getId()
+                    + " cannot access the assignment " + assignmentId);
+        }
+
+        final Paper paper = loadPaper(assignmentId, student.getId());
+
+        if (!paper.isEnabled())
+            throw new PaperIsNotEnabledException("Paper " + paper.getKey() +
+                    " is not enabled");
+
+        final Timestamp submissionDate = Timestamp.valueOf(LocalDateTime.now());
+
+        if (submissionDate.after(assignment.getExpiryDate()))
+            throw new AssignmentExpiredException("Assignment " + assignmentId +
+                    " is expired");
+
+
+        final PaperVersion paperVersion = new PaperVersion();
+        paperVersion.setDate(submissionDate);
+        paperVersion.setContentUrl(paperVersionDTO.getContentUrl());
+        paperVersion.setPaper(paper);
+
+        paperVersionRepository.save(paperVersion);
+
+        paper.addPaperVersion(paperVersion);
+        paper.setStatus("CONSEGNATO");
+        paperRepository.save(paper);
+
+        return modelMapper.map(paperVersion, PaperVersionDTO.class);
+
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public PaperDTO readPaper(Long assignmentId) {
+
+        final Assignment assignment = loadAssignment(assignmentId);
+        final Student student = loadCurrentStudent();
+
+        if (!assignment.getCourse().getStudents().contains(student)) {
+            throw new StudentNotAuthorizedException("Student " + student.getId()
+                    + " cannot access the assignment " + assignmentId);
+        }
+
+        final Paper paper = loadPaper(assignmentId, student.getId());
+
+        if (paper.getStatus().equals("NULL")) {
+            paper.setStatus("LETTO");
+            paperRepository.save(paper);
+        }
+        return modelMapper.map(paper, PaperDTO.class);
     }
 
 //    @Override
