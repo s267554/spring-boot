@@ -50,7 +50,9 @@ public interface VirtualLabsService {
 
     void disablePaper(Long assignmentId, String studentId);
 
-    void updatePaper(Long assignmentId, String studentId, PaperDTO paperDTO);
+    void addPaper(Long assignmentId, List<String> studentIds);
+
+    PaperDTO updatePaper(Long assignmentId, String studentId, PaperDTO paperDTO);
 
     TeamDTO proposeTeam(String courseName, String teamName, List<String> studentIds, Long timeout);
 

@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,6 +72,13 @@ public class CourseController {
     public void enrollOne(@PathVariable(name = "courseName") @NotBlank String courseName,
                           @RequestBody @Valid @NotNull StudentDTO studentDTO) {
         virtualLabsService.addStudentToCourse(courseName, studentDTO.getId());
+
+        // aggiungo paper ancora consegnabili
+        final Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        virtualLabsService.getAssignmentsOfCourse(courseName)
+                .stream().filter(assignmentDTO -> assignmentDTO.getExpiryDate().before(now))
+                .map(AssignmentDTO::getId)
+                .forEach(aLong -> virtualLabsService.addPaper(aLong, Collections.singletonList(studentDTO.getId())));
     }
 
     @PostMapping("/{courseName}/dropOutAll")

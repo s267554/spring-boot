@@ -316,7 +316,25 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
     @Override
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public void updatePaper(Long assignmentId, String studentId, PaperDTO paperDTO) {
+    public void addPaper(Long assignmentId, List<String> studentIds) {
+        final Assignment assignment = loadAssignmentIfProfessorIsAuthorized(assignmentId);
+
+        studentRepository.findAllById(studentIds).forEach(student -> {
+            final Paper paper = new Paper();
+            final Paper.Key key = new Paper.Key(assignmentId, student.getId());
+            paper.setKey(key);
+            paper.setStudent(student);
+            paper.setEnabled(true);
+            paper.setStatus("NULL");
+            paper.setAssignment(assignment);
+            paperRepository.save(paper);
+        });
+
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public PaperDTO updatePaper(Long assignmentId, String studentId, PaperDTO paperDTO) {
         final Paper paper = loadPaperIfProfessorIsAuthorized(assignmentId, studentId);
 
         modelMapper.map(paperDTO, paper);
