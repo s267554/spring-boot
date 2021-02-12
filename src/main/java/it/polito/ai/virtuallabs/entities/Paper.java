@@ -32,7 +32,8 @@ public class Paper {
     @EmbeddedId
     Key key;
 
-    @Size(max = 33)
+    // dà problemi
+    // @Size(max = 33)
     @Column(name = "vote")
     Integer vote;
 
