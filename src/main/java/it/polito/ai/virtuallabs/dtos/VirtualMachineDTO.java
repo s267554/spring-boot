@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.hateoas.RepresentationModel;
 
+import java.util.List;
+
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class VirtualMachineDTO extends RepresentationModel<VirtualMachineDTO> {
@@ -19,5 +21,7 @@ public class VirtualMachineDTO extends RepresentationModel<VirtualMachineDTO> {
     private String url;
 
     private boolean active;
+
+    private List<StudentDTO> owners;
 
 }

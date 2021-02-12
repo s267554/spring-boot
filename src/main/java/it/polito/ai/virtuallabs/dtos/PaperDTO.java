@@ -10,7 +10,7 @@ public class PaperDTO extends RepresentationModel<PaperDTO> {
 
     Long assignmentId;
 
-    String studentId;
+    StudentDTO student;
 
     Integer vote;
 
