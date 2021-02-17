@@ -5,11 +5,17 @@ import it.polito.ai.virtuallabs.dtos.CourseDTO;
 import it.polito.ai.virtuallabs.dtos.StudentDTO;
 import it.polito.ai.virtuallabs.services.VirtualLabsService;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -79,6 +85,18 @@ public class CourseController {
                 .stream().filter(assignmentDTO -> assignmentDTO.getExpiryDate().before(now))
                 .map(AssignmentDTO::getId)
                 .forEach(aLong -> virtualLabsService.addPaper(aLong, Collections.singletonList(studentDTO.getId())));
+    }
+
+    @PostMapping("/{courseName}/enrollMany")
+    public void enrollStudents(
+            @PathVariable(name = "courseName") String courseName,
+            @RequestParam("file") MultipartFile file) throws IOException {
+        if ("text/csv".equals(file.getContentType())) {
+            final Reader r = new InputStreamReader(file.getInputStream());
+            virtualLabsService.addAndEnroll(r, courseName);
+        } else {
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, file.getContentType());
+        }
     }
 
     @PostMapping("/{courseName}/dropOutAll")

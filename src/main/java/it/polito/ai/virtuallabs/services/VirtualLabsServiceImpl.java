@@ -1,5 +1,7 @@
 package it.polito.ai.virtuallabs.services;
 
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.CsvToBeanBuilder;
 import it.polito.ai.virtuallabs.dtos.*;
 import it.polito.ai.virtuallabs.entities.*;
 import it.polito.ai.virtuallabs.repositories.*;
@@ -13,11 +15,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Reader;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static it.polito.ai.virtuallabs.ModelUtil.ROLE_ADMIN;
 
 @Service
 @Transactional
@@ -736,6 +741,33 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
             paperRepository.save(paper);
         }
         return modelMapper.map(paper, PaperDTO.class);
+    }
+
+    public List<Boolean> addAndEnroll(Reader r, String courseName) {
+
+        // create csv bean reader
+        final CsvToBean<StudentDTO> csvToBean = new CsvToBeanBuilder<StudentDTO>(r)
+                .withType(StudentDTO.class)
+                .withIgnoreLeadingWhiteSpace(true)
+                .build();
+
+        // convert `CsvToBean` object to list of students
+        final List<StudentDTO> students = csvToBean.parse();
+
+        final Course course = loadCourseIfProfessorIsAuthorized(courseName);
+
+        students.forEach(studentDTO -> {
+            if (studentRepository.existsById(studentDTO.getId())) {
+                throw new UsernameAlreadyExistsException("User " + studentDTO.getId() + " already exists");
+            }
+            final Student student = modelMapper.map(studentDTO, Student.class);
+            studentRepository.save(student);
+            course.addStudent(student);
+        });
+
+        courseRepository.save(course);
+
+        return null;
     }
 
 //    @Override

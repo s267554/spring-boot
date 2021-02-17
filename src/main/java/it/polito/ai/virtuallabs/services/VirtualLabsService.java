@@ -2,6 +2,7 @@ package it.polito.ai.virtuallabs.services;
 
 import it.polito.ai.virtuallabs.dtos.*;
 
+import java.io.Reader;
 import java.util.List;
 
 public interface VirtualLabsService {
@@ -102,4 +103,6 @@ public interface VirtualLabsService {
 
 
     PaperDTO readPaper(Long assignmentId);
+
+    List<Boolean> addAndEnroll(Reader r, String courseName);
 }
