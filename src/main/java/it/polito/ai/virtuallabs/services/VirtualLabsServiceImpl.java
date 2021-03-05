@@ -582,6 +582,12 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
                     + " cannot access the team " + teamName);
         }
 
+        // Can't leave no owners
+        if(vm.getOwners().isEmpty()) {
+            throw new VirtualLabsServiceException("Virtual machine " + vm.getId() +
+                    " need at least 1 owner");
+        }
+
         // Fetch all vms in order to calculate the current resources used by the team.
         final List<VirtualMachine> vms = team.getVirtualMachines();
 
@@ -604,7 +610,10 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         VirtualMachine virtualMachine = modelMapper.map(vm, VirtualMachine.class);
         virtualMachine.setTeam(team);
         virtualMachine.setVmModel(team.getVirtualMachineModel());
-        virtualMachine.setOwners(Collections.singletonList(student));
+        virtualMachine.setOwners(team.getMembers()
+                .stream().filter(member -> vm.getOwners().stream().map(StudentDTO::getId)
+                        .anyMatch(stid -> member.getId().equals(stid)))
+                .collect(Collectors.toList()));
 
         return modelMapper.map(virtualMachineRepository.save(virtualMachine), VirtualMachineDTO.class);
     }
@@ -626,6 +635,12 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         if (!team.getMembers().contains(student)) {
             throw new StudentNotAuthorizedException("Student " + student.getId()
                     + " cannot access the team " + teamName);
+        }
+
+        // Can't leave no owners
+        if(vm.getOwners().isEmpty()) {
+            throw new VirtualLabsServiceException("Virtual machine " + vm.getId() +
+                    " need at least 1 owner");
         }
 
         // Fetch all vms in order to calculate the current resources used by the team.
