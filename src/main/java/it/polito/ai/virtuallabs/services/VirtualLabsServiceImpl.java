@@ -197,7 +197,10 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
     public List<TeamDTO> getTeamsOfCourse(String courseName) {
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
+
+        // filter only enabled teams, teacher does not care about proposals
         return course.getTeams().stream()
+                .filter(Team::isEnabled)
                 .map(t -> modelMapper.map(t, TeamDTO.class))
                 .collect(Collectors.toList());
     }
