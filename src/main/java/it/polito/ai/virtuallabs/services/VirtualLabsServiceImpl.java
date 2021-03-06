@@ -251,13 +251,19 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         int totVcpu = vms.stream().map(VirtualMachine::getVcpu).reduce(0, Integer::sum);
         double space = vms.stream().map(VirtualMachine::getSpace).reduce(0.0, Double::sum);
         double ram = vms.stream().map(VirtualMachine::getRam).reduce(0.0, Double::sum);
+        long novms = vms.size();
+        long novmsactive = vms.stream().filter(VirtualMachine::isActive).count();
 
         // If the new resources are less than current used resources, the team cannot be updated
-        if (totVcpu > teamDTO.getVcpu() || space > teamDTO.getSpace() || ram > teamDTO.getRam()) {
+        if (totVcpu > teamDTO.getVcpu() || space > teamDTO.getSpace() || ram > teamDTO.getRam() || novms > teamDTO.getMaxVMs() || novmsactive > teamDTO.getMaxVMsActive()) {
             throw new TeamResourcesExceededException("The new resources cannot be less than current resources used");
         }
 
-        modelMapper.map(teamDTO, team);
+        team.setVcpu(teamDTO.getVcpu());
+        team.setRam(teamDTO.getRam());
+        team.setSpace(teamDTO.getSpace());
+        team.setMaxVMs(teamDTO.getMaxVMs());
+        team.setMaxVMsActive(teamDTO.getMaxVMsActive());
 
         teamRepository.save(team);
     }
