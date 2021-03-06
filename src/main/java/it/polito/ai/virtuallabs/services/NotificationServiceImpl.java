@@ -238,6 +238,10 @@ public class NotificationServiceImpl implements NotificationService {
 
         teamTokenRepository.deleteById(token);
 
+        List<String> rejected = team.getRejectedIds();
+        rejected.add(t.getStudent().getId());
+        team.setRejectedIds(rejected);
+
         team.setInvalid(true);
         teamRepository.save(team);
     }
