@@ -1,7 +1,9 @@
 package it.polito.ai.virtuallabs.services;
 
+import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
+import com.opencsv.exceptions.CsvValidationException;
 import it.polito.ai.virtuallabs.dtos.*;
 import it.polito.ai.virtuallabs.entities.*;
 import it.polito.ai.virtuallabs.repositories.*;
@@ -15,11 +17,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static it.polito.ai.virtuallabs.ModelUtil.ROLE_ADMIN;
@@ -769,23 +773,32 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
     public List<Boolean> addAndEnroll(Reader r, String courseName) {
 
-        // create csv bean reader
-        final CsvToBean<StudentDTO> csvToBean = new CsvToBeanBuilder<StudentDTO>(r)
-                .withType(StudentDTO.class)
+        /*// create csv bean reader
+        final CsvToBean<String> csvToBean = new CsvToBeanBuilder<>(r)
+                .withType(String.class)
                 .withIgnoreLeadingWhiteSpace(true)
                 .build();
 
         // convert `CsvToBean` object to list of students
-        final List<StudentDTO> students = csvToBean.parse();
+        final List<String> students = csvToBean.parse();*/
+
+        List<String> students = new ArrayList<String>();
+        try (CSVReader csvReader = new CSVReader(r);) {
+            String[] values = null;
+            while ((values = csvReader.readNext()) != null) {
+                students.add(values[0]);
+            }
+        } catch (IOException | CsvValidationException e) {
+            e.printStackTrace();
+        }
 
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
-        students.forEach(studentDTO -> {
-            if (studentRepository.existsById(studentDTO.getId())) {
-                throw new UsernameAlreadyExistsException("User " + studentDTO.getId() + " already exists");
-            }
-            final Student student = modelMapper.map(studentDTO, Student.class);
-            studentRepository.save(student);
+        students.forEach(id -> {
+            // add non existing student exception
+            final Student student = studentRepository.findById(id).orElseThrow(
+                    () -> new StudentNotEnrolledException("Student not found")
+            );
             course.addStudent(student);
         });
 
