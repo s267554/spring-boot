@@ -1,12 +1,10 @@
 package it.polito.ai.virtuallabs.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.polito.ai.virtuallabs.dtos.UserDTO;
 import it.polito.ai.virtuallabs.models.AuthRequest;
 import it.polito.ai.virtuallabs.models.AuthResponse;
 import it.polito.ai.virtuallabs.models.RegisterRequest;
 import it.polito.ai.virtuallabs.security.JwtTokenProvider;
-import it.polito.ai.virtuallabs.services.ImageService;
 import it.polito.ai.virtuallabs.services.NotificationService;
 import it.polito.ai.virtuallabs.services.UserService;
 import org.jetbrains.annotations.NotNull;
@@ -18,12 +16,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -47,36 +46,28 @@ public class AuthController {
 
     private final NotificationService notificationService;
 
-    private final ImageService imageService;
-
     public AuthController(UserService userService,
                           NotificationService notificationService,
                           AuthenticationManager authenticationManager,
                           ModelMapper modelMapper,
                           PasswordEncoder passwordEncoder,
-                          JwtTokenProvider jwtTokenProvider, ImageService imageService) {
+                          JwtTokenProvider jwtTokenProvider) {
         this.userService = userService;
         this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.notificationService = notificationService;
-        this.imageService = imageService;
     }
 
     @PostMapping("/register")
-    public void register(@Valid @RequestParam("request") String json,
-                         @RequestParam("file") MultipartFile file) throws IOException {
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        RegisterRequest registerRequest = objectMapper.readValue(json, RegisterRequest.class);
+    public void register(@Valid @RequestBody RegisterRequest registerRequest) {
 
         final UserDTO userDTO = valid(registerRequest);
 
         final String password = passwordEncoder.encode(registerRequest.getPassword1());
         userDTO.setPassword(password);
 
-        userDTO.setPhotoUrl(imageService.uploadImage(file));
         userService.createUser(userDTO);
 
         notificationService.notifyAccount(userDTO);
@@ -131,7 +122,7 @@ public class AuthController {
                 }
                 // If the id starts with s, the user is a student and its email domain should be @studenti.polito.it
                 // otherwise the email domain must be @polito.it
-                if (id.startsWith("s") && !split[1].equals(USER_EMAIL_DOMAIN) || (!id.startsWith("s") && !split[1].equals(ADMIN_EMAIL_DOMAIN))) {
+                if (id.startsWith("s") && !split[1].equals(USER_EMAIL_DOMAIN) || !split[1].equals(ADMIN_EMAIL_DOMAIN)) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad email domain");
                 }
             } else {
@@ -150,9 +141,7 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username not specified");
         }
 
-        final UserDTO userDTO = new UserDTO();
-        userDTO.setName(registerRequest.getName());
-        userDTO.setSurname(registerRequest.getSurname());
+        final UserDTO userDTO = modelMapper.map(registerRequest, UserDTO.class);
         userDTO.setEmail(email);
         userDTO.setId(id);
 

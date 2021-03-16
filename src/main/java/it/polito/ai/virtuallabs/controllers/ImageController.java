@@ -2,6 +2,7 @@ package it.polito.ai.virtuallabs.controllers;
 
 import it.polito.ai.virtuallabs.entities.Image;
 import it.polito.ai.virtuallabs.repositories.ImageDbRepository;
+import it.polito.ai.virtuallabs.services.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
@@ -21,23 +22,19 @@ public class ImageController {
     @Autowired
     ImageDbRepository imageDbRepository;
 
+    private final ImageService imageService;
+
+    public ImageController(ImageService imageService) {
+        this.imageService = imageService;
+    }
+
     @PostMapping
-    URI uploadImage(@RequestParam("file") MultipartFile multipartImage) throws Exception {
-        Image dbImage = new Image();
-        dbImage.setContent(multipartImage.getBytes());
-        dbImage.setId(UUID.randomUUID().toString());
-
-        String id = imageDbRepository.save(dbImage).getId();
-
-        return WebMvcLinkBuilder
-                .linkTo(
-                        WebMvcLinkBuilder.methodOn(ImageController.class)
-                                .downloadImage(id)
-                ).toUri();
+    public String uploadImage(@RequestParam("file") MultipartFile multipartImage) throws Exception {
+        return imageService.uploadImage(multipartImage);
     }
 
     @GetMapping(value = "/{imageId}", produces = MediaType.IMAGE_JPEG_VALUE)
-    ByteArrayResource downloadImage(@PathVariable String imageId) {
+    public ByteArrayResource downloadImage(@PathVariable String imageId) {
         byte[] image = imageDbRepository.findById(imageId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND))
                 .getContent();
