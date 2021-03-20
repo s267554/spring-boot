@@ -88,12 +88,12 @@ public class CourseController {
     }
 
     @PostMapping("/{courseName}/enrollMany")
-    public void enrollStudents(
+    public List<StudentDTO> enrollStudents(
             @PathVariable(name = "courseName") String courseName,
             @RequestParam("file") MultipartFile file) throws IOException {
         if ("text/csv".equals(file.getContentType())) {
             final Reader r = new InputStreamReader(file.getInputStream());
-            virtualLabsService.addAndEnroll(r, courseName);
+            return virtualLabsService.addAndEnroll(r, courseName);
         } else {
             throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, file.getContentType());
         }

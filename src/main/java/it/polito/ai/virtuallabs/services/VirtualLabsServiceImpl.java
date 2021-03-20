@@ -1,8 +1,6 @@
 package it.polito.ai.virtuallabs.services;
 
 import com.opencsv.CSVReader;
-import com.opencsv.bean.CsvToBean;
-import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.exceptions.CsvValidationException;
 import it.polito.ai.virtuallabs.dtos.*;
 import it.polito.ai.virtuallabs.entities.*;
@@ -23,10 +21,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static it.polito.ai.virtuallabs.ModelUtil.ROLE_ADMIN;
 
 @Service
 @Transactional
@@ -771,7 +766,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         return modelMapper.map(paper, PaperDTO.class);
     }
 
-    public List<Boolean> addAndEnroll(Reader r, String courseName) {
+    public List<StudentDTO> addAndEnroll(Reader r, String courseName) {
 
         /*// create csv bean reader
         final CsvToBean<String> csvToBean = new CsvToBeanBuilder<>(r)
@@ -782,11 +777,11 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         // convert `CsvToBean` object to list of students
         final List<String> students = csvToBean.parse();*/
 
-        List<String> students = new ArrayList<String>();
+        List<String> studentIds = new ArrayList<String>();
         try (CSVReader csvReader = new CSVReader(r);) {
             String[] values = null;
             while ((values = csvReader.readNext()) != null) {
-                students.add(values[0]);
+                studentIds.add(values[0]);
             }
         } catch (IOException | CsvValidationException e) {
             e.printStackTrace();
@@ -794,17 +789,23 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
-        students.forEach(id -> {
+        final ArrayList<Student> students = new ArrayList<>();
+
+        studentIds.stream().distinct().forEach(id -> {
             // add non existing student exception
             final Student student = studentRepository.findById(id).orElseThrow(
                     () -> new StudentNotEnrolledException("Student not found")
             );
-            course.addStudent(student);
+            if(!student.getCourses().contains(course)) {
+                course.addStudent(student);
+                students.add(student);
+            }
         });
 
         courseRepository.save(course);
 
-        return null;
+        return mapToStudentDTOs(students);
+
     }
 
 //    @Override

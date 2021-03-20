@@ -104,5 +104,5 @@ public interface VirtualLabsService {
 
     PaperDTO readPaper(Long assignmentId);
 
-    List<Boolean> addAndEnroll(Reader r, String courseName);
+    List<StudentDTO> addAndEnroll(Reader r, String courseName);
 }
