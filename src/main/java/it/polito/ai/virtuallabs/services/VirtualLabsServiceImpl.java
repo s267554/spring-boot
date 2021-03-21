@@ -348,6 +348,11 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
         final Timestamp creationDate = Timestamp.valueOf(LocalDateTime.now());
+
+        if (assignmentDTO.getExpiryDate().getTime() < creationDate.getTime())
+            // TODO: create exception
+            throw new AssignmentExpiredException("New assignemnt can't be already expired");
+
         final Assignment assignment = modelMapper.map(assignmentDTO, Assignment.class);
         assignment.setCreationDate(creationDate);
         assignment.setCourse(course);
