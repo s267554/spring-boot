@@ -1,8 +1,13 @@
 package it.polito.ai.virtuallabs.controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.polito.ai.virtuallabs.dtos.AssignmentDTO;
 import it.polito.ai.virtuallabs.dtos.CourseDTO;
 import it.polito.ai.virtuallabs.dtos.StudentDTO;
+import it.polito.ai.virtuallabs.dtos.UserDTO;
+import it.polito.ai.virtuallabs.models.RegisterRequest;
+import it.polito.ai.virtuallabs.services.ImageService;
 import it.polito.ai.virtuallabs.services.VirtualLabsService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
@@ -28,9 +33,11 @@ import java.util.stream.Collectors;
 public class CourseController {
 
     private final VirtualLabsService virtualLabsService;
+    private final ImageService imageService;
 
-    public CourseController(VirtualLabsService virtualLabsService) {
+    public CourseController(VirtualLabsService virtualLabsService, ImageService imageService) {
         this.virtualLabsService = virtualLabsService;
+        this.imageService = imageService;
     }
 
     @GetMapping({"", "/"})
@@ -126,7 +133,16 @@ public class CourseController {
 
     @PostMapping("/{courseName}/assignments")
     public AssignmentDTO createAssignment(@PathVariable(name = "courseName") @NotBlank String courseName,
-                                          @Valid @RequestBody AssignmentDTO assignmentDTO) {
+                                          @Valid @RequestParam("request") String json,
+                                          @RequestParam("file") MultipartFile file) throws IOException {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        AssignmentDTO assignmentDTO = objectMapper.readValue(json, AssignmentDTO.class);
+
+        // add validation?
+
+        assignmentDTO.setContentUrl(imageService.uploadImage(file));
+
         final AssignmentDTO a = virtualLabsService.addAssignmentToCourse(courseName, assignmentDTO);
 
         List<String> studentIds = virtualLabsService.getStudentsOfCourse(courseName)
