@@ -395,6 +395,18 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
     @Override
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public PaperDTO updatePaper(Long assignmentId, String studentId, PaperDTO paperDTO) {
+        if (!paperDTO.getStatus().equals("CONSEGNATO"))
+            throw new PaperIsNotEnabledException("Can't revise non-submitted paper");
+
+        if (paperDTO.isEnabled() && (paperDTO.getVote() != null))
+            // TODO: create new exception
+            throw new PaperIsNotEnabledException("Can't assign vote to non-final paper");
+
+        // wtf
+        if (paperDTO.getVote() < 0 || paperDTO.getVote() > 33)
+            // TODO: create new exception
+            throw new PaperIsNotEnabledException("Vote must be a number between 0 and 33");
+
         final Paper paper = loadPaperIfProfessorIsAuthorized(assignmentId, studentId);
 
         modelMapper.map(paperDTO, paper);
