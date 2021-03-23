@@ -19,7 +19,7 @@ public interface StudentRepository extends JpaRepository<Student, String> {
     List<Student> findStudentsNotInCourse(String courseName);
 
     @Query(
-            "select s1 from Student s1 where s1 not in" +
+            "select s1 from Student s1 inner join s1.courses c where c.name = :courseName and s1 not in" +
                     "(select s2 " +
                     "from Student s2 inner join s2.courses c inner join c.teams t " +
                     "where c.name = :courseName and t.enabled = true)"
