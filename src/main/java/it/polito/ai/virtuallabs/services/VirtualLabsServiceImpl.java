@@ -634,7 +634,6 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         VirtualMachine virtualMachine = modelMapper.map(vm, VirtualMachine.class);
         virtualMachine.setTeam(team);
-        virtualMachine.setVmModel(team.getVirtualMachineModel());
         virtualMachine.setOwners(team.getMembers()
                 .stream().filter(member -> vm.getOwners().stream().map(StudentDTO::getId)
                         .anyMatch(stid -> member.getId().equals(stid)))

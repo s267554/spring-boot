@@ -25,4 +25,6 @@ public class CourseDTO extends RepresentationModel<CourseDTO> {
     @Min(1)
     private int min;
 
+    private VirtualMachineModelDTO virtualMachineModel;
+
 }

@@ -91,10 +91,6 @@ public class Team {
     )
     List<Student> members = new ArrayList<>();
 
-    @ManyToOne
-    @JoinColumn(name = "vm_model")
-    VirtualMachineModel virtualMachineModel;
-
     @OneToMany(mappedBy = "team")
     List<VirtualMachine> virtualMachines = new ArrayList<>();
 
