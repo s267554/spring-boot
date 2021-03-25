@@ -92,6 +92,11 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         modelMapper.map(courseDTO, course);
 
+        // if course disabled turn off all vms
+        if (!course.isEnabled()) {
+            course.getTeams().forEach(t -> t.getVirtualMachines().forEach(vm -> vm.setActive(false)));
+        }
+
         courseRepository.save(course);
 
     }
@@ -430,9 +435,6 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         final Course course = loadCourse(courseName);
 
-        if (!course.isEnabled()) {
-            throw new CourseNotEnabledException("Course " + courseName + " is not enabled");
-        }
 
         final Student student = loadCurrentStudent();
 
@@ -607,6 +609,10 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
                     + " cannot access the team " + teamName);
         }
 
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException("Course " + courseName + " is not enabled");
+        }
+
         // Can't leave no owners
         if(vm.getOwners().isEmpty()) {
             throw new VirtualLabsServiceException("Virtual machine " + vm.getId() +
@@ -659,6 +665,10 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         if (!team.getMembers().contains(student)) {
             throw new StudentNotAuthorizedException("Student " + student.getId()
                     + " cannot access the team " + teamName);
+        }
+
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException("Course " + courseName + " is not enabled");
         }
 
         // Can't leave no owners

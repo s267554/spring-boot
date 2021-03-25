@@ -19,7 +19,6 @@ public class ProposeTeamRequest {
     private Long timeout;
 
     @NotNull
-    @NotEmpty
     private List<String> ids;
 
 }
