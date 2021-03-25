@@ -108,6 +108,30 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         // modify the course
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
+        List<Professor> professors = course.getProfessors();
+        professors.forEach(p -> p.getCourses().remove(course));
+        professorRepository.saveAll(professors);
+
+        List<Student> students = course.getStudents();
+        students.forEach(s -> s.getCourses().remove(course));
+        studentRepository.saveAll(students);
+
+        List<Team> teams = course.getTeams();
+        teams.forEach(t -> {
+            teamTokenRepository.deleteAllByTeamId(t.getKey());
+            virtualMachineRepository.deleteAll(t.getVirtualMachines());
+        });
+        teamRepository.deleteAll(teams);
+
+        List<Assignment> assignments = course.getAssignments();
+        List<Paper> papers = new ArrayList<>();
+        List<PaperVersion> versions = new ArrayList<>();
+        assignments.forEach(a -> papers.addAll(a.getPapers()));
+        papers.forEach(p -> versions.addAll(p.getVersions()));
+        paperVersionRepository.deleteAll(versions);
+        paperRepository.deleteAll(papers);
+        assignmentRepository.deleteAll(assignments);
+
         courseRepository.delete(course);
     }
 
