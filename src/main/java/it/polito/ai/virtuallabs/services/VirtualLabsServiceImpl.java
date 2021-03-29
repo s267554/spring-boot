@@ -450,7 +450,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
     @Override
     @PreAuthorize("hasRole('ROLE_USER')")
-    public TeamDTO proposeTeam(String courseName, String teamName, List<String> studentIds, Long timeout) {
+    public TeamEmbeddedDTO proposeTeam(String courseName, String teamName, List<String> studentIds, Long timeout) {
 
         final Team.Key key = new Team.Key(courseName, teamName);
         if (teamRepository.existsById(key)) {
@@ -466,6 +466,14 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
             throw new StudentNotEnrolledException("Student " + student.getId()
                     + " is not enrolled into course " + courseName);
         }
+
+        // can't be in any other active porposal
+        if (course.getTeams().stream()
+                .filter(value -> value.getConfirmedIds().contains(student.getId()))
+                .anyMatch(value -> (value.getExpiryDate().compareTo(new Date()) > 0 && !value.isInvalid())
+                        || value.isEnabled())
+        )
+            throw new StudentAlreadyHasATeamException("Can't join more than one team");
 
         // TODO: creator must be included in this calculation -- remove filter or add
         final List<String> ids = studentIds.stream()
@@ -517,7 +525,10 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         });
 
-        return modelMapper.map(teamRepository.save(team), TeamDTO.class);
+        if (team.getConfirmedIds().size() == team.getMembers().size())
+            team.setEnabled(true);
+
+        return modelMapper.map(teamRepository.save(team), TeamEmbeddedDTO.class);
 
     }
 

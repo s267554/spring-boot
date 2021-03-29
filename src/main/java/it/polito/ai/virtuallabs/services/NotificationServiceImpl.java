@@ -8,10 +8,7 @@ import it.polito.ai.virtuallabs.repositories.AccountTokenRepository;
 import it.polito.ai.virtuallabs.repositories.TeamRepository;
 import it.polito.ai.virtuallabs.repositories.TeamTokenRepository;
 import it.polito.ai.virtuallabs.repositories.UserRepository;
-import it.polito.ai.virtuallabs.services.exceptions.TeamNotEnabledException;
-import it.polito.ai.virtuallabs.services.exceptions.TeamNotFoundException;
-import it.polito.ai.virtuallabs.services.exceptions.TokenExpiredException;
-import it.polito.ai.virtuallabs.services.exceptions.TokenNotFoundException;
+import it.polito.ai.virtuallabs.services.exceptions.*;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
@@ -22,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import javax.validation.constraints.NotBlank;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -136,6 +134,15 @@ public class NotificationServiceImpl implements NotificationService {
             // TODO: create new exception
             throw new TeamNotEnabledException("Team is not valid anymore");
 
+        // can't be in any other active porposal
+        @NotBlank String id = t.getStudent().getId();
+        if (t.getTeam().getCourse().getTeams().stream()
+                .filter(value -> value.getConfirmedIds().contains(id))
+                .anyMatch(value -> (value.getExpiryDate().compareTo(new Date()) > 0 && !value.isInvalid())
+                        || value.isEnabled())
+        )
+            throw new StudentAlreadyHasATeamException("Can't join more than one team");
+
         // can't delete tokens
         // teamTokenRepository.deleteById(token);
 
@@ -206,6 +213,8 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         teamTokenRepository.saveAll(tokens);
+
+        ids.remove(teamDTO.getCreator());
 
         for (int i = 0; i < ids.size(); i++) {
 

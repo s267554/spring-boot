@@ -83,16 +83,16 @@ public class TeamController {
     }
 
     @PostMapping("/proposeTeam")
-    public TeamDTO proposeTeam(@PathVariable(name = "courseName") @NotBlank String courseName,
+    public TeamEmbeddedDTO proposeTeam(@PathVariable(name = "courseName") @NotBlank String courseName,
                                @RequestBody @Valid @NotNull ProposeTeamRequest request) {
 
         final List<String> ids = request.getIds();
 
-        final TeamDTO t = virtualLabsService.proposeTeam(courseName, request.getName(), ids, request.getTimeout());
+        final TeamEmbeddedDTO t = virtualLabsService.proposeTeam(courseName, request.getName(), ids, request.getTimeout());
 
         notificationService.notifyTeam(t, ids, request.getTimeout());
 
-        return ModelHelper.enrich(t);
+        return t;
 
     }
 
