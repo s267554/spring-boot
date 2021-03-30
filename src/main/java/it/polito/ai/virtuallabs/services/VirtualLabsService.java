@@ -55,7 +55,7 @@ public interface VirtualLabsService {
 
     PaperDTO updatePaper(Long assignmentId, String studentId, PaperDTO paperDTO);
 
-    TeamDTO proposeTeam(String courseName, String teamName, List<String> studentIds, Long timeout);
+    TeamEmbeddedDTO proposeTeam(String courseName, String teamName, List<String> studentIds, Long timeout);
 
     List<StudentDTO> getStudentsNotInTeam(String courseName);
 
@@ -104,5 +104,5 @@ public interface VirtualLabsService {
 
     PaperDTO readPaper(Long assignmentId);
 
-    List<Boolean> addAndEnroll(Reader r, String courseName);
+    List<StudentDTO> addAndEnroll(Reader r, String courseName);
 }

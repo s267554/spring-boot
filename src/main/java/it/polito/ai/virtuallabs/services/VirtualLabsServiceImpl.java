@@ -1,8 +1,6 @@
 package it.polito.ai.virtuallabs.services;
 
 import com.opencsv.CSVReader;
-import com.opencsv.bean.CsvToBean;
-import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.exceptions.CsvValidationException;
 import it.polito.ai.virtuallabs.dtos.*;
 import it.polito.ai.virtuallabs.entities.*;
@@ -23,10 +21,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static it.polito.ai.virtuallabs.ModelUtil.ROLE_ADMIN;
 
 @Service
 @Transactional
@@ -97,6 +92,11 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         modelMapper.map(courseDTO, course);
 
+        // if course disabled turn off all vms
+        if (!course.isEnabled()) {
+            course.getTeams().forEach(t -> t.getVirtualMachines().forEach(vm -> vm.setActive(false)));
+        }
+
         courseRepository.save(course);
 
     }
@@ -107,6 +107,30 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         // If nothing exception is thrown, the current professor is authorized to
         // modify the course
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
+
+        List<Professor> professors = course.getProfessors();
+        professors.forEach(p -> p.getCourses().remove(course));
+        professorRepository.saveAll(professors);
+
+        List<Student> students = course.getStudents();
+        students.forEach(s -> s.getCourses().remove(course));
+        studentRepository.saveAll(students);
+
+        List<Team> teams = course.getTeams();
+        teams.forEach(t -> {
+            teamTokenRepository.deleteAllByTeamId(t.getKey());
+            virtualMachineRepository.deleteAll(t.getVirtualMachines());
+        });
+        teamRepository.deleteAll(teams);
+
+        List<Assignment> assignments = course.getAssignments();
+        List<Paper> papers = new ArrayList<>();
+        List<PaperVersion> versions = new ArrayList<>();
+        assignments.forEach(a -> papers.addAll(a.getPapers()));
+        papers.forEach(p -> versions.addAll(p.getVersions()));
+        paperVersionRepository.deleteAll(versions);
+        paperRepository.deleteAll(papers);
+        assignmentRepository.deleteAll(assignments);
 
         courseRepository.delete(course);
     }
@@ -353,6 +377,11 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
         final Timestamp creationDate = Timestamp.valueOf(LocalDateTime.now());
+
+        if (assignmentDTO.getExpiryDate().getTime() < creationDate.getTime())
+            // TODO: create exception
+            throw new AssignmentExpiredException("New assignemnt can't be already expired");
+
         final Assignment assignment = modelMapper.map(assignmentDTO, Assignment.class);
         assignment.setCreationDate(creationDate);
         assignment.setCourse(course);
@@ -400,16 +429,33 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
     @Override
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public PaperDTO updatePaper(Long assignmentId, String studentId, PaperDTO paperDTO) {
+        if (paperDTO.isEnabled() && (paperDTO.getVote() != null))
+            // TODO: create new exception
+            throw new PaperIsNotEnabledException("Can't assign vote to non-final paper");
+
         final Paper paper = loadPaperIfProfessorIsAuthorized(assignmentId, studentId);
 
-        modelMapper.map(paperDTO, paper);
+        if (!paper.getStatus().equals("CONSEGNATO"))
+            throw new PaperIsNotEnabledException("Can't revise non-submitted paper");
+
+        paper.setEnabled(paperDTO.isEnabled());
+
+        if (paperDTO.getVote() != null) {
+            if (paperDTO.getVote() < 0 || paperDTO.getVote() > 33)
+                // TODO: create new exception
+                throw new PaperIsNotEnabledException("Vote must be a number between 0 and 33");
+
+            paper.setVote(paperDTO.getVote());
+        }
+
+        paper.setStatus("RIVISTO");
 
         return modelMapper.map(paperRepository.save(paper), PaperDTO.class);
     }
 
     @Override
     @PreAuthorize("hasRole('ROLE_USER')")
-    public TeamDTO proposeTeam(String courseName, String teamName, List<String> studentIds, Long timeout) {
+    public TeamEmbeddedDTO proposeTeam(String courseName, String teamName, List<String> studentIds, Long timeout) {
 
         final Team.Key key = new Team.Key(courseName, teamName);
         if (teamRepository.existsById(key)) {
@@ -418,9 +464,6 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         final Course course = loadCourse(courseName);
 
-        if (!course.isEnabled()) {
-            throw new CourseNotEnabledException("Course " + courseName + " is not enabled");
-        }
 
         final Student student = loadCurrentStudent();
 
@@ -428,6 +471,14 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
             throw new StudentNotEnrolledException("Student " + student.getId()
                     + " is not enrolled into course " + courseName);
         }
+
+        // can't be in any other active porposal
+        if (course.getTeams().stream()
+                .filter(value -> value.getConfirmedIds().contains(student.getId()))
+                .anyMatch(value -> (value.getExpiryDate().compareTo(new Date()) > 0 && !value.isInvalid())
+                        || value.isEnabled())
+        )
+            throw new StudentAlreadyHasATeamException("Can't join more than one team");
 
         // TODO: creator must be included in this calculation -- remove filter or add
         final List<String> ids = studentIds.stream()
@@ -479,7 +530,10 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         });
 
-        return modelMapper.map(teamRepository.save(team), TeamDTO.class);
+        if (team.getConfirmedIds().size() == team.getMembers().size())
+            team.setEnabled(true);
+
+        return modelMapper.map(teamRepository.save(team), TeamEmbeddedDTO.class);
 
     }
 
@@ -595,6 +649,10 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
                     + " cannot access the team " + teamName);
         }
 
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException("Course " + courseName + " is not enabled");
+        }
+
         // Can't leave no owners
         if(vm.getOwners().isEmpty()) {
             throw new VirtualLabsServiceException("Virtual machine " + vm.getId() +
@@ -622,7 +680,6 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         VirtualMachine virtualMachine = modelMapper.map(vm, VirtualMachine.class);
         virtualMachine.setTeam(team);
-        virtualMachine.setVmModel(team.getVirtualMachineModel());
         virtualMachine.setOwners(team.getMembers()
                 .stream().filter(member -> vm.getOwners().stream().map(StudentDTO::getId)
                         .anyMatch(stid -> member.getId().equals(stid)))
@@ -648,6 +705,10 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         if (!team.getMembers().contains(student)) {
             throw new StudentNotAuthorizedException("Student " + student.getId()
                     + " cannot access the team " + teamName);
+        }
+
+        if (!course.isEnabled()) {
+            throw new CourseNotEnabledException("Course " + courseName + " is not enabled");
         }
 
         // Can't leave no owners
@@ -771,7 +832,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         return modelMapper.map(paper, PaperDTO.class);
     }
 
-    public List<Boolean> addAndEnroll(Reader r, String courseName) {
+    public List<StudentDTO> addAndEnroll(Reader r, String courseName) {
 
         /*// create csv bean reader
         final CsvToBean<String> csvToBean = new CsvToBeanBuilder<>(r)
@@ -782,11 +843,11 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         // convert `CsvToBean` object to list of students
         final List<String> students = csvToBean.parse();*/
 
-        List<String> students = new ArrayList<String>();
+        List<String> studentIds = new ArrayList<String>();
         try (CSVReader csvReader = new CSVReader(r);) {
             String[] values = null;
             while ((values = csvReader.readNext()) != null) {
-                students.add(values[0]);
+                studentIds.add(values[0]);
             }
         } catch (IOException | CsvValidationException e) {
             e.printStackTrace();
@@ -794,17 +855,23 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
-        students.forEach(id -> {
+        final ArrayList<Student> students = new ArrayList<>();
+
+        studentIds.stream().distinct().forEach(id -> {
             // add non existing student exception
             final Student student = studentRepository.findById(id).orElseThrow(
                     () -> new StudentNotEnrolledException("Student not found")
             );
-            course.addStudent(student);
+            if(!student.getCourses().contains(course)) {
+                course.addStudent(student);
+                students.add(student);
+            }
         });
 
         courseRepository.save(course);
 
-        return null;
+        return mapToStudentDTOs(students);
+
     }
 
 //    @Override

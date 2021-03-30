@@ -56,6 +56,10 @@ public class Course {
     @OneToMany(mappedBy = "course")
     List<Assignment> assignments = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "vm_model")
+    VirtualMachineModel virtualMachineModel;
+
     public void addStudent(@NotNull Student student) {
         student.courses.add(this);
         students.add(student);
