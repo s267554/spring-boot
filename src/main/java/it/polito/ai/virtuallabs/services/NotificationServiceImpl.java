@@ -74,7 +74,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .orElseThrow(TokenNotFoundException::new);
         if (t.getExpiryDate().compareTo(new Date()) < 0) {
             accountTokenRepository.deleteById(token);
-            throw new TokenExpiredException();
+            throw new TokenExpiredException("Token expired");
         }
 
         final User user = t.getUser();
@@ -126,7 +126,7 @@ public class NotificationServiceImpl implements NotificationService {
             // teamTokenRepository.deleteById(token);
             team.setInvalid(true);
             teamRepository.save(team);
-            throw new TokenExpiredException();
+            throw new TokenExpiredException("Token expired");
         }
 
 
