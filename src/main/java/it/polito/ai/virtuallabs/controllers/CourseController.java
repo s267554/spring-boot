@@ -1,12 +1,9 @@
 package it.polito.ai.virtuallabs.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.polito.ai.virtuallabs.dtos.AssignmentDTO;
 import it.polito.ai.virtuallabs.dtos.CourseDTO;
 import it.polito.ai.virtuallabs.dtos.StudentDTO;
-import it.polito.ai.virtuallabs.dtos.UserDTO;
-import it.polito.ai.virtuallabs.models.RegisterRequest;
 import it.polito.ai.virtuallabs.services.ImageService;
 import it.polito.ai.virtuallabs.services.VirtualLabsService;
 import org.jetbrains.annotations.NotNull;
