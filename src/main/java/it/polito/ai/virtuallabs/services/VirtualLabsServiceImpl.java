@@ -9,7 +9,6 @@ import it.polito.ai.virtuallabs.security.IAuthenticationFacade;
 import it.polito.ai.virtuallabs.services.exceptions.*;
 import org.jetbrains.annotations.NotNull;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -27,38 +26,53 @@ import java.util.stream.Collectors;
 @Transactional
 public class VirtualLabsServiceImpl implements VirtualLabsService {
 
-    @Autowired
-    private IAuthenticationFacade authenticationFacade;
+    private final IAuthenticationFacade authenticationFacade;
 
-    @Autowired
-    private ProfessorRepository professorRepository;
+    private final ProfessorRepository professorRepository;
 
-    @Autowired
-    private StudentRepository studentRepository;
+    private final StudentRepository studentRepository;
 
-    @Autowired
-    private CourseRepository courseRepository;
+    private final CourseRepository courseRepository;
 
-    @Autowired
-    private TeamRepository teamRepository;
+    private final TeamRepository teamRepository;
 
-    @Autowired
-    private VirtualMachineRepository virtualMachineRepository;
+    private final VirtualMachineRepository virtualMachineRepository;
 
-    @Autowired
-    private AssignmentRepository assignmentRepository;
+    private final AssignmentRepository assignmentRepository;
 
-    @Autowired
-    private PaperRepository paperRepository;
+    private final PaperRepository paperRepository;
 
-    @Autowired
-    private PaperVersionRepository paperVersionRepository;
+    private final PaperVersionRepository paperVersionRepository;
 
-    @Autowired
-    private ModelMapper modelMapper;
+    private final ModelMapper modelMapper;
 
-    @Autowired
-    private TeamTokenRepository teamTokenRepository;
+    private final TeamTokenRepository teamTokenRepository;
+
+    public VirtualLabsServiceImpl(
+            StudentRepository studentRepository,
+            IAuthenticationFacade authenticationFacade,
+            ProfessorRepository professorRepository,
+            CourseRepository courseRepository,
+            TeamRepository teamRepository,
+            VirtualMachineRepository virtualMachineRepository,
+            AssignmentRepository assignmentRepository,
+            PaperRepository paperRepository,
+            PaperVersionRepository paperVersionRepository,
+            ModelMapper modelMapper,
+            TeamTokenRepository teamTokenRepository
+    ) {
+        this.studentRepository = studentRepository;
+        this.authenticationFacade = authenticationFacade;
+        this.professorRepository = professorRepository;
+        this.courseRepository = courseRepository;
+        this.teamRepository = teamRepository;
+        this.virtualMachineRepository = virtualMachineRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.paperRepository = paperRepository;
+        this.paperVersionRepository = paperVersionRepository;
+        this.modelMapper = modelMapper;
+        this.teamTokenRepository = teamTokenRepository;
+    }
 
     @Override
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -121,15 +135,15 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         // modify the course
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
-        List<Professor> professors = course.getProfessors();
+        final List<Professor> professors = course.getProfessors();
         professors.forEach(p -> p.getCourses().remove(course));
         professorRepository.saveAll(professors);
 
-        List<Student> students = course.getStudents();
+        final List<Student> students = course.getStudents();
         students.forEach(s -> s.getCourses().remove(course));
         studentRepository.saveAll(students);
 
-        List<Team> teams = course.getTeams();
+        final List<Team> teams = course.getTeams();
         teams.forEach(t -> {
             teamTokenRepository.deleteAllByTeamId(t.getKey());
             virtualMachineRepository.deleteAll(t.getVirtualMachines());
@@ -177,8 +191,8 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         // fetch students of the course
         final Course course = loadCourseIfProfessorIsAuthorized(courseName);
 
-        List<Student> students = course.getStudents();
-        List<StudentDTO> studentDTOS = new ArrayList<>();
+        final List<Student> students = course.getStudents();
+        final List<StudentDTO> studentDTOS = new ArrayList<>();
         for (Student s : students) {
             StudentDTO studentDTO = modelMapper.map(s, StudentDTO.class);
             Optional<Team> team = s.getTeams().stream().filter(t -> t.getKey().getCourseName().equals(courseName)).filter(Team::isEnabled).findAny();
@@ -314,10 +328,9 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         Course course;
 
-        if(isCurrentUserIsAdmin()) {
+        if (isCurrentUserIsAdmin()) {
             course = loadCourseIfProfessorIsAuthorized(courseName);
-        }
-        else {
+        } else {
             course = loadCourse(courseName);
             final Student student = loadCurrentStudent();
 
@@ -338,13 +351,12 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         Assignment assignment;
 
-        if(isCurrentUserIsAdmin()) {
+        if (isCurrentUserIsAdmin()) {
             assignment = loadAssignmentIfProfessorIsAuthorized(assignmentId);
             return assignment.getPapers().stream()
                     .map((p) -> modelMapper.map(p, PaperDTO.class))
                     .collect(Collectors.toList());
-        }
-        else {
+        } else {
             assignment = loadAssignment(assignmentId);
             final Student student = loadCurrentStudent();
 
@@ -366,10 +378,9 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         Paper paper;
 
-        if(isCurrentUserIsAdmin()) {
+        if (isCurrentUserIsAdmin()) {
             paper = loadPaperIfProfessorIsAuthorized(assignmentId, username);
-        }
-        else {
+        } else {
             paper = loadPaper(assignmentId, username);
             final Student student = loadCurrentStudent();
 
@@ -605,8 +616,8 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         return ret.map(team -> Collections.singletonList(modelMapper.map(team, TeamEmbeddedDTO.class))).orElseGet(
                 () -> teamTokenRepository.findByStudentAndCourseName(studentId, courseName).stream()
-                .map(token -> modelMapper.map(token.getTeam(), TeamEmbeddedDTO.class))
-                .collect(Collectors.toList())
+                        .map(token -> modelMapper.map(token.getTeam(), TeamEmbeddedDTO.class))
+                        .collect(Collectors.toList())
         );
 
     }
@@ -667,7 +678,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         }
 
         // Can't leave no owners
-        if(vm.getOwners().isEmpty()) {
+        if (vm.getOwners().isEmpty()) {
             throw new VirtualLabsServiceException("Virtual machine " + vm.getId() +
                     " need at least 1 owner");
         }
@@ -725,7 +736,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         }
 
         // Can't leave no owners
-        if(vm.getOwners().isEmpty()) {
+        if (vm.getOwners().isEmpty()) {
             throw new VirtualLabsServiceException("Virtual machine " + vm.getId() +
                     " need at least 1 owner");
         }
@@ -745,7 +756,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
         // If the new resources are less than current used resources, the team cannot be updated
         if (totVcpu + vm.getVcpu() > team.getVcpu() ||
                 space + vm.getSpace() > team.getSpace() ||
-                ram + vm.getRam()  > team.getRam()) {
+                ram + vm.getRam() > team.getRam()) {
             throw new TeamResourcesExceededException("The new resources cannot be more than current limit");
         }
 
@@ -875,7 +886,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
             final Student student = studentRepository.findById(id).orElseThrow(
                     () -> new StudentNotEnrolledException("Student not found")
             );
-            if(!student.getCourses().contains(course)) {
+            if (!student.getCourses().contains(course)) {
                 course.addStudent(student);
                 students.add(student);
             }
@@ -976,7 +987,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
     /**
      * @param id
-     * @return
+     * @return Assignment
      * @throws AssignmentNotFoundException
      */
     private Assignment loadAssignment(Long id) throws AssignmentNotFoundException {
@@ -986,7 +997,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
     /**
      * @param id
-     * @return
+     * @return VirtualMachine
      * @throws VirtualMachineNotFoundException
      * @throws ProfessorNotAuthorizedException
      */
@@ -1003,7 +1014,7 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
     /**
      * @param id
-     * @return
+     * @return VirtualMachine
      * @throws VirtualMachineNotFoundException
      */
     private VirtualMachine loadVM(Long id) throws VirtualMachineNotFoundException {
