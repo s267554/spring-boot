@@ -27,4 +27,6 @@ public class CourseDTO extends RepresentationModel<CourseDTO> {
 
     private VirtualMachineModelDTO virtualMachineModel;
 
+    private String[] professorsIds;
+
 }

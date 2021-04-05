@@ -19,6 +19,8 @@ public class UserController {
 
     @GetMapping(value = "/{userId}")
     public UserDTO getUserProfile(@PathVariable String userId) {
-        return userService.loadUserByUsername(userId);
+        UserDTO userDTO = userService.loadUserByUsername(userId);
+        userDTO.setPassword("");
+        return userDTO;
     }
 }

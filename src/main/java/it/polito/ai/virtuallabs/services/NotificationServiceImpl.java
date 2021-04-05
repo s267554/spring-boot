@@ -1,6 +1,5 @@
 package it.polito.ai.virtuallabs.services;
 
-import it.polito.ai.virtuallabs.controllers.NotificationController;
 import it.polito.ai.virtuallabs.dtos.TeamDTO;
 import it.polito.ai.virtuallabs.dtos.UserDTO;
 import it.polito.ai.virtuallabs.entities.*;
@@ -10,8 +9,6 @@ import it.polito.ai.virtuallabs.repositories.TeamTokenRepository;
 import it.polito.ai.virtuallabs.repositories.UserRepository;
 import it.polito.ai.virtuallabs.services.exceptions.*;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.hateoas.Link;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -103,12 +100,9 @@ public class NotificationServiceImpl implements NotificationService {
 
         accountTokenRepository.save(token);
 
-        final Link confirmLink = WebMvcLinkBuilder
-                .linkTo(NotificationController.class)
-                .slash("confirmAccount?token=" + token.getId())
-                .withSelfRel();
+        final String confirmLink = "http://localhost/confirmAccount?token="+token.getId();
 
-        sendMessage(userDTO.getEmail(), "Confirm your account", confirmLink.toString());
+        sendMessage(userDTO.getEmail(), "Confirm your account", confirmLink);
 
     }
 
@@ -222,18 +216,11 @@ public class NotificationServiceImpl implements NotificationService {
 
             final TeamToken token = tokens.get(i);
 
-            final Link confirmLink = WebMvcLinkBuilder
-                    .linkTo(NotificationController.class)
-                    .slash("confirmTeam?token=" + token.getId())
-                    .withSelfRel();
+            final String confirmLink = "http://localhost/confirmTeam?token="+token.getId();
 
-            final Link rejectLink = WebMvcLinkBuilder
-                    .linkTo(NotificationController.class)
-                    .slash("rejectTeam?token=" + token.getId())
-                    .withSelfRel();
+            final String rejectLink = "http://localhost/rejectTeam?token="+token.getId();
 
-            sendMessage(email, "Team invitation " + teamDTO.getName(),
-                    confirmLink.toString() + "\n" + rejectLink.toString());
+            sendMessage(email, "Team invitation " + teamDTO.getName(), confirmLink + "\n" + rejectLink);
 
         }
     }

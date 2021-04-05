@@ -1,8 +1,12 @@
 package it.polito.ai.virtuallabs;
 
 import it.polito.ai.virtuallabs.config.SpringAsyncConfig;
+import it.polito.ai.virtuallabs.dtos.CourseDTO;
+import it.polito.ai.virtuallabs.dtos.PaperDTO;
 import it.polito.ai.virtuallabs.dtos.TeamDTO;
 import it.polito.ai.virtuallabs.dtos.TeamEmbeddedDTO;
+import it.polito.ai.virtuallabs.entities.Course;
+import it.polito.ai.virtuallabs.entities.Paper;
 import it.polito.ai.virtuallabs.entities.Team;
 import org.jetbrains.annotations.NotNull;
 import org.modelmapper.ModelMapper;
@@ -54,7 +58,7 @@ public class VirtualLabsApplication {
                                         .map(source, destination.getKey());
                             }
                         });
-                //.include(TeamEmbeddedDTO.class, Team.class);
+        //.include(TeamEmbeddedDTO.class, Team.class);
         modelMapper.typeMap(TeamEmbeddedDTO.class, Team.class)
                 .addMappings(
                         new PropertyMap<TeamEmbeddedDTO, Team>() {
@@ -71,10 +75,15 @@ public class VirtualLabsApplication {
         modelMapper.typeMap(Team.class, TeamDTO.class)
                 .addMapping(src -> src.getKey().getCourseName(), TeamDTO::setCourseName)
                 .addMapping(src -> src.getKey().getName(), TeamDTO::setName);
-                //.include(Team.class, TeamEmbeddedDTO.class);
+        //.include(Team.class, TeamEmbeddedDTO.class);
         modelMapper.typeMap(Team.class, TeamEmbeddedDTO.class)
                 .addMapping(src -> src.getKey().getCourseName(), TeamEmbeddedDTO::setCourseName)
                 .addMapping(src -> src.getKey().getName(), TeamEmbeddedDTO::setName);
+
+        modelMapper.typeMap(Paper.class, PaperDTO.class)
+                .addMapping(src -> src.getKey().getAssignmentId(), PaperDTO::setAssignmentId);
+
+        modelMapper.typeMap(CourseDTO.class, Course.class).addMappings(mapper -> mapper.skip(Course::setProfessors));
 
         return modelMapper;
     }
