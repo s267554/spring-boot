@@ -30,9 +30,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO loadUserByUsername(String username) throws UsernameNotFoundException {
         final User user = loadUser(username);
-        UserDTO userDTO = modelMapper.map(user, UserDTO.class);
-        userDTO.setPassword("");
-        return userDTO;
+        return modelMapper.map(user, UserDTO.class);
     }
 
     @Override
