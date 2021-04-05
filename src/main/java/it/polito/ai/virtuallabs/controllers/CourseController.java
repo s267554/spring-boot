@@ -2,10 +2,7 @@ package it.polito.ai.virtuallabs.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.polito.ai.virtuallabs.dtos.AssignmentDTO;
-import it.polito.ai.virtuallabs.dtos.CourseDTO;
-import it.polito.ai.virtuallabs.dtos.StudentDTO;
-import it.polito.ai.virtuallabs.dtos.UserDTO;
+import it.polito.ai.virtuallabs.dtos.*;
 import it.polito.ai.virtuallabs.models.RegisterRequest;
 import it.polito.ai.virtuallabs.services.ImageService;
 import it.polito.ai.virtuallabs.services.VirtualLabsService;
@@ -81,6 +78,11 @@ public class CourseController {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/{courseName}/inCharge")
+    public List<ProfessorDTO> inCharge(@PathVariable(name = "courseName") @NotBlank String courseName) {
+        return virtualLabsService.getProfessorsOfCourse(courseName);
+    }
+
     @PostMapping("/{courseName}/enrollOne")
     public void enrollOne(@PathVariable(name = "courseName") @NotBlank String courseName,
                           @RequestBody @Valid @NotNull StudentDTO studentDTO) {
@@ -122,6 +124,12 @@ public class CourseController {
                 .map(ModelHelper::enrich)
                 .collect(Collectors.toList());
     }
+
+    @GetMapping("/{courseName}/notInCharge")
+    public List<ProfessorDTO> getProfessorsNotInCharge(@PathVariable(name = "courseName") @NotBlank String courseName) {
+        return virtualLabsService.getProfessorsNotInCharge(courseName);
+    }
+
 
     @GetMapping("/{courseName}/assignments")
     public List<AssignmentDTO> getAssignments(@PathVariable(name = "courseName") @NotBlank String courseName) {

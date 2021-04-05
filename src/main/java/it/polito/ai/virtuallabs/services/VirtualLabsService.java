@@ -105,4 +105,8 @@ public interface VirtualLabsService {
     PaperDTO readPaper(Long assignmentId);
 
     List<StudentDTO> addAndEnroll(Reader r, String courseName);
+
+    List<ProfessorDTO> getProfessorsNotInCharge(String courseName);
+
+    List<ProfessorDTO> getProfessorsOfCourse(String courseName);
 }

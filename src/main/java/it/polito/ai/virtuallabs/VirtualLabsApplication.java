@@ -1,9 +1,11 @@
 package it.polito.ai.virtuallabs;
 
 import it.polito.ai.virtuallabs.config.SpringAsyncConfig;
+import it.polito.ai.virtuallabs.dtos.CourseDTO;
 import it.polito.ai.virtuallabs.dtos.PaperDTO;
 import it.polito.ai.virtuallabs.dtos.TeamDTO;
 import it.polito.ai.virtuallabs.dtos.TeamEmbeddedDTO;
+import it.polito.ai.virtuallabs.entities.Course;
 import it.polito.ai.virtuallabs.entities.Paper;
 import it.polito.ai.virtuallabs.entities.Team;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +82,8 @@ public class VirtualLabsApplication {
 
         modelMapper.typeMap(Paper.class, PaperDTO.class)
                 .addMapping(src -> src.getKey().getAssignmentId(), PaperDTO::setAssignmentId);
+
+        modelMapper.typeMap(CourseDTO.class, Course.class).addMappings(mapper -> mapper.skip(Course::setProfessors));
 
         return modelMapper;
     }

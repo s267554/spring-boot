@@ -92,6 +92,19 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
         modelMapper.map(courseDTO, course);
 
+        // controllo che rimanga almeno un titolare
+        if (courseDTO.getProfessorsIds().length < 1)
+            // TODO: aggiungere eccezione
+            throw new CourseNotEnabledException("Can't leave course with no professors");
+
+        for (String id : courseDTO.getProfessorsIds()) {
+            Professor p = loadProfessor(id);
+            if (!p.isEnabled())
+                throw new ProfessorNotAuthorizedException("Professor " + p.getName() + " is not verified");
+            if (!course.getProfessors().contains(p))
+                course.addProfessor(p);
+        }
+
         // if course disabled turn off all vms
         if (!course.isEnabled()) {
             course.getTeams().forEach(t -> t.getVirtualMachines().forEach(vm -> vm.setActive(false)));
@@ -874,6 +887,21 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
 
     }
 
+    @Override
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public List<ProfessorDTO> getProfessorsNotInCharge(String courseName) {
+        loadCourseIfProfessorIsAuthorized(courseName);
+        return mapToProfessorDTOs(professorRepository.findProfessorsNotInCharge(courseName));
+    }
+
+
+    @Override
+    public List<ProfessorDTO> getProfessorsOfCourse(String courseName) {
+        Course course = loadCourse(courseName);
+        return course.getProfessors().stream().map(p -> modelMapper.map(p, ProfessorDTO.class))
+                .collect(Collectors.toList());
+    }
+
 //    @Override
 //    @PreAuthorize("hasRole('ROLE_USER')")
 //    public TeamDTO getTeam(String courseName) {
@@ -1031,6 +1059,12 @@ public class VirtualLabsServiceImpl implements VirtualLabsService {
     private List<StudentDTO> mapToStudentDTOs(@NotNull List<Student> students) {
         return students.stream()
                 .map((s) -> modelMapper.map(s, StudentDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    private List<ProfessorDTO> mapToProfessorDTOs(@NotNull List<Professor> professors) {
+        return professors.stream()
+                .map((p) -> modelMapper.map(p, ProfessorDTO.class))
                 .collect(Collectors.toList());
     }
 
