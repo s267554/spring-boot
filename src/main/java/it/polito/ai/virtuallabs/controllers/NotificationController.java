@@ -19,19 +19,19 @@ public class NotificationController {
     }
 
     @GetMapping("/confirmAccount")
-    public String confirmAccount(@RequestParam(name = "token") @NotBlank String token) {
+    public Object confirmAccount(@RequestParam(name = "token") @NotBlank String token) {
         notificationService.confirmAccount(token);
         return "account_confirm_page";
     }
 
     @GetMapping("/confirmTeam")
-    public String confirmTeam(@RequestParam(name = "token") @NotBlank String token) {
+    public Object confirmTeam(@RequestParam(name = "token") @NotBlank String token) {
         notificationService.confirmTeam(token);
         return "team_confirm_page";
     }
 
     @GetMapping("/rejectTeam")
-    public String rejectTeam(@RequestParam(name = "token") @NotBlank String token) {
+    public Object rejectTeam(@RequestParam(name = "token") @NotBlank String token) {
         notificationService.rejectTeam(token);
         return "team_reject_page";
     }
